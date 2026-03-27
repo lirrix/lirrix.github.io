@@ -1,930 +1,1010 @@
 <!DOCTYPE html>
 <html lang="de">
 <head>
-  <meta charset="UTF-8"/>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Jonas Küchen — Möfa Köln</title>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
-  <style>
-    @import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400;600&family=Outfit:wght@300;400;500&display=swap');
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Luis Genenger — Digital Nomad</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.8.5/d3.min.js"></script>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;0,900;1,400;1,700&family=DM+Sans:wght@300;400;500&display=swap');
 
-    :root {
-      --bg: #0a0a0a;
-      --bg2: #111111;
-      --surface: #161616;
-      --border: #222222;
-      --gold: #c9a96e;
-      --gold-dim: #8a6d42;
-      --white: #f0ece4;
-      --muted: #555;
-      --text: #c8c2b8;
-    }
+:root {
+  --bg:        #f5f0e8;
+  --bg2:       #ede7d9;
+  --surface:   #e8e0cf;
+  --border:    #d4c9b0;
+  --border2:   #c4b898;
+  --ink:       #1c1812;
+  --ink2:      #3d3628;
+  --muted:     #8a7d65;
+  --amber:     #c47c2b;
+  --amber-dim: rgba(196,124,43,0.15);
+  --teal:      #2a7c6f;
+  --teal-dim:  rgba(42,124,111,0.15);
+  --red:       #c0392b;
+  --paper:     #faf7f0;
+}
 
-    *, *::before, *::after { margin:0; padding:0; box-sizing:border-box; }
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box;}
+html{scroll-behavior:smooth;}
+body{
+  background:var(--bg);
+  color:var(--ink2);
+  font-family:'DM Sans',sans-serif;
+  font-weight:300;
+  overflow-x:hidden;
+  cursor:none;
+}
 
-    html { scroll-behavior: smooth; }
+/* ── CURSOR ── */
+#cur{position:fixed;width:8px;height:8px;background:var(--amber);border-radius:50%;pointer-events:none;z-index:9999;transform:translate(-50%,-50%);transition:width .25s,height .25s,opacity .25s;}
+#cur-r{position:fixed;width:30px;height:30px;border:1.5px solid rgba(196,124,43,.4);border-radius:50%;pointer-events:none;z-index:9998;transform:translate(-50%,-50%);}
 
-    body {
-      background: var(--bg);
-      color: var(--text);
-      font-family: 'Outfit', sans-serif;
-      font-weight: 300;
-      overflow-x: hidden;
-      cursor: none;
-    }
+/* ── TEXTURE OVERLAY ── */
+body::before{
+  content:'';position:fixed;inset:0;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='400' height='400'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='400' height='400' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E");
+  pointer-events:none;z-index:998;
+}
 
-    /* ── CUSTOM CURSOR ── */
-    .cursor {
-      position: fixed;
-      width: 8px; height: 8px;
-      background: var(--gold);
-      border-radius: 50%;
-      pointer-events: none;
-      z-index: 9999;
-      transform: translate(-50%,-50%);
-      transition: transform 0.1s, width 0.3s, height 0.3s, opacity 0.3s;
-    }
-    .cursor-ring {
-      position: fixed;
-      width: 32px; height: 32px;
-      border: 1px solid rgba(201,169,110,0.4);
-      border-radius: 50%;
-      pointer-events: none;
-      z-index: 9998;
-      transform: translate(-50%,-50%);
-      transition: transform 0.15s ease-out, width 0.3s, height 0.3s;
-    }
+/* ── NAV ── */
+nav{
+  position:fixed;top:0;left:0;right:0;z-index:500;
+  padding:20px 48px;
+  display:flex;align-items:center;justify-content:space-between;
+  background:rgba(245,240,232,.92);
+  backdrop-filter:blur(16px);
+  border-bottom:1px solid var(--border);
+}
+.nav-logo{
+  font-family:'Playfair Display',serif;
+  font-size:18px;font-weight:700;
+  color:var(--ink);letter-spacing:.5px;
+}
+.nav-logo span{color:var(--amber);}
 
-    /* ── NOISE OVERLAY ── */
-    body::before {
-      content: '';
-      position: fixed;
-      inset: 0;
-      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.04'/%3E%3C/svg%3E");
-      pointer-events: none;
-      z-index: 1000;
-      opacity: 0.4;
-    }
+.nav-right{display:flex;gap:8px;align-items:center;}
+.nav-pill{
+  background:transparent;border:1.5px solid var(--border2);
+  color:var(--muted);font-family:'DM Sans',sans-serif;
+  font-size:11px;letter-spacing:2px;text-transform:uppercase;
+  padding:8px 18px;cursor:none;transition:all .3s;
+}
+.nav-pill:hover,.nav-pill.active{
+  border-color:var(--amber);color:var(--amber);background:var(--amber-dim);
+}
 
-    /* ── NAV ── */
-    nav {
-      position: fixed;
-      top: 0; left: 0; right: 0;
-      z-index: 500;
-      padding: 24px 48px;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      background: linear-gradient(to bottom, rgba(10,10,10,0.95), transparent);
-      backdrop-filter: blur(12px);
-      -webkit-backdrop-filter: blur(12px);
-    }
+/* ── NAV PANELS ── */
+.nav-panel{
+  position:fixed;top:70px;right:48px;z-index:490;
+  width:380px;background:var(--paper);
+  border:1.5px solid var(--border2);
+  padding:32px;
+  opacity:0;pointer-events:none;
+  transform:translateY(-8px);
+  transition:opacity .3s,transform .3s;
+  box-shadow:0 20px 60px rgba(28,24,18,.12);
+}
+.nav-panel.open{opacity:1;pointer-events:all;transform:translateY(0);}
+.panel-title{
+  font-family:'Playfair Display',serif;font-size:20px;font-weight:700;
+  color:var(--ink);margin-bottom:24px;
+}
 
-    .nav-logo {
-      font-family: 'Cormorant Garamond', serif;
-      font-size: 22px;
-      font-weight: 600;
-      color: var(--white);
-      letter-spacing: 3px;
-      text-transform: uppercase;
-    }
-    .nav-logo span { color: var(--gold); }
+.f-group{margin-bottom:16px;}
+.f-group label{display:block;font-size:10px;letter-spacing:2px;text-transform:uppercase;color:var(--muted);margin-bottom:6px;}
+.f-group input,.f-group textarea,.f-group select{
+  width:100%;background:var(--bg);border:1.5px solid var(--border);
+  color:var(--ink);font-family:'DM Sans',sans-serif;font-size:13px;
+  padding:10px 14px;outline:none;transition:border-color .3s;resize:none;
+}
+.f-group input:focus,.f-group textarea:focus{border-color:var(--amber);}
+.f-group textarea{height:80px;}
+.f-submit{
+  width:100%;background:var(--amber);color:#fff;border:none;
+  font-family:'DM Sans',sans-serif;font-size:11px;font-weight:500;
+  letter-spacing:3px;text-transform:uppercase;padding:14px;
+  cursor:none;transition:background .3s,transform .2s;
+}
+.f-submit:hover{background:#b36d20;transform:translateY(-1px);}
 
-    .nav-right { display: flex; align-items: center; gap: 36px; }
+.cert-list{display:flex;flex-direction:column;gap:10px;}
+.cert-item{
+  display:flex;align-items:center;gap:14px;
+  padding:12px 14px;border:1.5px solid var(--border);
+  background:var(--bg);transition:border-color .3s;
+}
+.cert-item:hover{border-color:var(--amber);}
+.cert-icon{width:34px;height:34px;background:var(--amber-dim);border:1.5px solid rgba(196,124,43,.3);display:flex;align-items:center;justify-content:center;font-size:15px;flex-shrink:0;}
+.cert-name{font-size:12px;color:var(--ink);font-weight:400;}
+.cert-org{font-size:10px;color:var(--muted);margin-top:2px;letter-spacing:.5px;}
+.cert-badge{margin-left:auto;font-size:9px;letter-spacing:2px;text-transform:uppercase;color:var(--amber);border:1px solid rgba(196,124,43,.4);padding:3px 8px;white-space:nowrap;}
 
-    .nav-links { display: flex; gap: 32px; list-style: none; }
-    .nav-links a {
-      color: var(--muted);
-      text-decoration: none;
-      font-size: 12px;
-      letter-spacing: 2px;
-      text-transform: uppercase;
-      transition: color 0.3s;
-    }
-    .nav-links a:hover { color: var(--gold); }
+/* ── HERO ── */
+.hero{
+  min-height:100vh;
+  display:grid;grid-template-columns:1fr 1fr;
+  align-items:center;
+  padding:100px 48px 60px;
+  position:relative;overflow:hidden;
+  gap:60px;
+}
+.hero-left{}
+.hero-stamp{
+  display:inline-block;
+  border:2px solid var(--amber);
+  color:var(--amber);
+  font-size:9px;letter-spacing:4px;text-transform:uppercase;
+  padding:6px 14px;margin-bottom:28px;
+  opacity:0;animation:fadeUp .9s .1s forwards;
+}
+.hero-title{
+  font-family:'Playfair Display',serif;
+  font-size:clamp(48px,7vw,96px);
+  font-weight:900;color:var(--ink);
+  line-height:.95;letter-spacing:-2px;
+  opacity:0;animation:fadeUp .9s .3s forwards;
+}
+.hero-title em{font-style:italic;color:var(--amber);}
+.hero-title .outline{
+  -webkit-text-stroke:1.5px var(--ink);color:transparent;
+}
+.hero-role{
+  margin-top:24px;
+  font-size:13px;color:var(--muted);letter-spacing:2px;text-transform:uppercase;
+  opacity:0;animation:fadeUp .9s .5s forwards;
+}
+.hero-desc{
+  margin-top:20px;font-size:15px;line-height:1.85;color:var(--ink2);
+  max-width:420px;
+  opacity:0;animation:fadeUp .9s .6s forwards;
+}
+.hero-cta{
+  margin-top:36px;display:flex;align-items:center;gap:20px;
+  opacity:0;animation:fadeUp .9s .8s forwards;
+}
+.btn-main{
+  background:var(--ink);color:var(--bg);
+  text-decoration:none;font-size:11px;letter-spacing:3px;
+  text-transform:uppercase;padding:14px 30px;font-weight:500;
+  transition:background .3s,transform .2s;display:inline-block;
+}
+.btn-main:hover{background:var(--ink2);transform:translateY(-2px);}
+.btn-sec{
+  color:var(--muted);text-decoration:none;font-size:11px;
+  letter-spacing:2px;text-transform:uppercase;
+  display:flex;align-items:center;gap:10px;transition:color .3s;
+}
+.btn-sec:hover{color:var(--amber);}
+.btn-sec::after{content:'';display:block;width:32px;height:1.5px;background:currentColor;transition:width .3s;}
+.btn-sec:hover::after{width:50px;}
 
-    /* ── CONTACT DROPDOWN ── */
-    .contact-wrap { position: relative; }
+/* Hero right — explorer card */
+.hero-right{
+  opacity:0;animation:fadeUp .9s .4s forwards;
+}
+.explorer-card{
+  background:var(--paper);
+  border:1.5px solid var(--border2);
+  padding:36px;
+  position:relative;
+  box-shadow:8px 8px 0 var(--border);
+}
+.explorer-card::before{
+  content:'EXPLORER';
+  position:absolute;top:-1px;right:24px;
+  background:var(--amber);color:#fff;
+  font-size:8px;letter-spacing:4px;padding:4px 12px;font-weight:500;
+}
+.ec-stat{padding:18px 0;border-bottom:1px solid var(--border);}
+.ec-stat:last-child{border-bottom:none;padding-bottom:0;}
+.ec-num{
+  font-family:'Playfair Display',serif;
+  font-size:42px;font-weight:900;color:var(--ink);line-height:1;
+}
+.ec-num span{color:var(--amber);font-size:24px;}
+.ec-label{font-size:10px;letter-spacing:3px;text-transform:uppercase;color:var(--muted);margin-top:4px;}
+.ec-tags{display:flex;flex-wrap:wrap;gap:8px;margin-top:20px;}
+.ec-tag{
+  font-size:10px;letter-spacing:1px;
+  padding:5px 12px;border:1.5px solid var(--border2);color:var(--muted);
+  transition:all .3s;
+}
+.ec-tag:hover{border-color:var(--amber);color:var(--amber);}
+.ec-tag.hi{border-color:var(--teal);color:var(--teal);}
 
-    .contact-btn {
-      background: transparent;
-      border: 1px solid var(--gold-dim);
-      color: var(--gold);
-      font-family: 'Outfit', sans-serif;
-      font-size: 11px;
-      letter-spacing: 2px;
-      text-transform: uppercase;
-      padding: 10px 20px;
-      cursor: none;
-      transition: background 0.3s, border-color 0.3s;
-    }
-    .contact-btn:hover { background: rgba(201,169,110,0.08); border-color: var(--gold); }
+@keyframes fadeUp{from{opacity:0;transform:translateY(20px);}to{opacity:1;transform:translateY(0);}}
 
-    .dropdown {
-      position: absolute;
-      top: calc(100% + 12px);
-      right: 0;
-      width: 360px;
-      background: var(--surface);
-      border: 1px solid var(--border);
-      padding: 32px;
-      opacity: 0;
-      pointer-events: none;
-      transform: translateY(-8px);
-      transition: opacity 0.35s, transform 0.35s;
-      box-shadow: 0 40px 80px rgba(0,0,0,0.6);
-    }
-    .dropdown.open {
-      opacity: 1;
-      pointer-events: all;
-      transform: translateY(0);
-    }
+/* ── DIVIDER ── */
+.divider{
+  height:1px;background:linear-gradient(90deg,transparent,var(--border2),transparent);
+  margin:0 48px;
+}
 
-    .dropdown h3 {
-      font-family: 'Cormorant Garamond', serif;
-      font-size: 20px;
-      font-weight: 400;
-      color: var(--white);
-      margin-bottom: 24px;
-      letter-spacing: 1px;
-    }
+/* ── MAP SECTION ── */
+.map-section{padding:90px 48px;}
+.sec-eyebrow{font-size:10px;letter-spacing:5px;text-transform:uppercase;color:var(--amber);margin-bottom:12px;}
+.sec-title{
+  font-family:'Playfair Display',serif;
+  font-size:clamp(32px,5vw,56px);font-weight:900;
+  color:var(--ink);line-height:1;letter-spacing:-1px;margin-bottom:6px;
+}
+.sec-sub{font-size:13px;color:var(--muted);letter-spacing:1px;margin-bottom:48px;}
 
-    .form-group { margin-bottom: 18px; }
-    .form-group label {
-      display: block;
-      font-size: 10px;
-      letter-spacing: 2px;
-      text-transform: uppercase;
-      color: var(--muted);
-      margin-bottom: 6px;
-    }
-    .form-group input,
-    .form-group textarea,
-    .form-group select {
-      width: 100%;
-      background: var(--bg2);
-      border: 1px solid var(--border);
-      color: var(--white);
-      font-family: 'Outfit', sans-serif;
-      font-size: 13px;
-      padding: 10px 14px;
-      outline: none;
-      transition: border-color 0.3s;
-      resize: none;
-    }
-    .form-group input:focus,
-    .form-group textarea:focus,
-    .form-group select:focus { border-color: var(--gold-dim); }
-    .form-group textarea { height: 80px; }
-    .form-group select option { background: var(--bg2); }
+.map-counter{
+  display:flex;align-items:baseline;gap:12px;margin-bottom:32px;
+}
+.map-count-num{
+  font-family:'Playfair Display',serif;
+  font-size:clamp(56px,9vw,110px);font-weight:900;
+  color:var(--amber);line-height:1;
+}
+.map-count-total{
+  font-family:'Playfair Display',serif;
+  font-size:clamp(32px,5vw,64px);font-weight:400;
+  color:var(--border2);line-height:1;
+}
+.map-count-label{font-size:12px;letter-spacing:3px;text-transform:uppercase;color:var(--muted);margin-left:4px;}
 
-    .submit-btn {
-      width: 100%;
-      background: var(--gold);
-      color: var(--bg);
-      border: none;
-      font-family: 'Outfit', sans-serif;
-      font-size: 11px;
-      letter-spacing: 3px;
-      text-transform: uppercase;
-      padding: 14px;
-      cursor: none;
-      font-weight: 500;
-      transition: background 0.3s, transform 0.2s;
-    }
-    .submit-btn:hover { background: #e0be87; transform: translateY(-1px); }
+/* MAP CONTAINER */
+.map-container{
+  width:100%;background:var(--paper);
+  border:1.5px solid var(--border2);
+  position:relative;overflow:hidden;
+  box-shadow:0 4px 32px rgba(28,24,18,.08);
+}
+#world-map{width:100%;display:block;cursor:crosshair;}
 
-    /* ── HERO ── */
-    .hero {
-      min-height: 100vh;
-      display: flex;
-      flex-direction: column;
-      justify-content: flex-end;
-      padding: 0 48px 80px;
-      position: relative;
-      overflow: hidden;
-    }
+/* Map country styles via JS/D3 */
+.map-legend{
+  display:flex;align-items:center;gap:28px;margin-top:18px;
+  font-size:11px;letter-spacing:2px;text-transform:uppercase;color:var(--muted);
+}
+.leg-swatch{width:14px;height:14px;border-radius:2px;}
 
-    .hero-bg {
-      position: absolute;
-      inset: 0;
-      background:
-        radial-gradient(ellipse 60% 50% at 70% 40%, rgba(201,169,110,0.05) 0%, transparent 70%),
-        radial-gradient(ellipse 40% 60% at 20% 80%, rgba(201,169,110,0.03) 0%, transparent 60%);
-    }
+/* MAP TOOLTIP */
+#map-tooltip{
+  position:fixed;
+  background:var(--ink);color:var(--bg);
+  font-family:'DM Sans',sans-serif;font-size:11px;
+  letter-spacing:2px;text-transform:uppercase;
+  padding:7px 14px;pointer-events:none;z-index:800;
+  opacity:0;transition:opacity .2s;
+  white-space:nowrap;
+}
 
-    .hero-line {
-      position: absolute;
-      top: 0; bottom: 0;
-      left: 48px;
-      width: 1px;
-      background: linear-gradient(to bottom, transparent, var(--border) 30%, var(--border) 70%, transparent);
-    }
+.map-controls{
+  display:flex;align-items:center;gap:12px;margin-top:20px;flex-wrap:wrap;
+}
+.map-btn{
+  background:transparent;border:1.5px solid var(--border2);
+  color:var(--muted);font-family:'DM Sans',sans-serif;
+  font-size:11px;letter-spacing:2px;text-transform:uppercase;
+  padding:9px 20px;cursor:none;transition:all .3s;
+  display:inline-flex;align-items:center;gap:8px;
+}
+.map-btn:hover,.map-btn.active-mode{border-color:var(--amber);color:var(--amber);background:var(--amber-dim);}
+.mode-hint{font-size:11px;color:var(--muted);letter-spacing:1px;padding:9px 0;}
 
-    .hero-tag {
-      font-size: 10px;
-      letter-spacing: 4px;
-      text-transform: uppercase;
-      color: var(--gold);
-      margin-bottom: 24px;
-      opacity: 0;
-      animation: fadeUp 1s 0.3s forwards;
-    }
+/* ── PROJECTS ── */
+.projects-section{
+  padding:90px 48px;
+  background:var(--bg2);
+  border-top:1px solid var(--border);border-bottom:1px solid var(--border);
+}
+.projects-grid{
+  display:grid;grid-template-columns:repeat(auto-fit,minmax(320px,1fr));
+  gap:24px;margin-top:56px;
+}
+.project-card{
+  background:var(--paper);border:1.5px solid var(--border);
+  padding:36px;position:relative;overflow:hidden;
+  transition:box-shadow .4s,transform .4s,border-color .4s;cursor:none;
+}
+.project-card:hover{
+  box-shadow:6px 6px 0 var(--border2);
+  transform:translate(-2px,-2px);
+  border-color:var(--border2);
+}
+.project-card.featured{
+  grid-column:1/-1;
+  display:grid;grid-template-columns:1fr 1fr;gap:48px;align-items:center;
+  background:var(--ink);border-color:var(--ink);
+}
+.project-card.featured .project-num{color:rgba(255,255,255,.2);}
+.project-card.featured .project-title{color:#fff;}
+.project-card.featured .project-desc{color:rgba(255,255,255,.6);}
+.project-card.featured .p-tag{border-color:rgba(255,255,255,.2);color:rgba(255,255,255,.5);}
+.project-card.featured .project-link{color:var(--amber);}
+.project-num{
+  font-family:'Playfair Display',serif;font-size:11px;font-weight:400;
+  letter-spacing:4px;color:var(--border2);margin-bottom:18px;font-style:italic;
+}
+.project-title{
+  font-family:'Playfair Display',serif;font-size:22px;font-weight:700;
+  color:var(--ink);margin-bottom:10px;line-height:1.2;
+}
+.project-desc{font-size:13px;color:var(--muted);line-height:1.85;margin-bottom:20px;}
+.project-tags{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:20px;}
+.p-tag{font-size:9px;letter-spacing:2px;text-transform:uppercase;padding:4px 10px;border:1px solid var(--border);color:var(--muted);}
+.project-link{font-size:10px;letter-spacing:3px;text-transform:uppercase;color:var(--amber);text-decoration:none;display:inline-flex;align-items:center;gap:8px;transition:gap .3s;}
+.project-link:hover{gap:14px;}
+.project-link::after{content:'→';}
+.feat-img{
+  aspect-ratio:4/3;background:linear-gradient(135deg,#2a2018,#1c1510);
+  display:flex;align-items:center;justify-content:center;font-size:56px;
+  border:1px solid rgba(255,255,255,.08);
+}
 
-    .hero-title {
-      font-family: 'Cormorant Garamond', serif;
-      font-size: clamp(52px, 8vw, 110px);
-      font-weight: 300;
-      color: var(--white);
-      line-height: 0.95;
-      letter-spacing: -2px;
-      max-width: 800px;
-      opacity: 0;
-      animation: fadeUp 1s 0.5s forwards;
-    }
-    .hero-title em {
-      font-style: italic;
-      color: var(--gold);
-    }
+/* ── SKILLS ── */
+.skills-section{padding:90px 48px;}
+.skills-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:40px;margin-top:56px;}
+.skill-group-title{
+  font-family:'Playfair Display',serif;font-size:16px;font-weight:700;font-style:italic;
+  color:var(--ink);margin-bottom:24px;padding-bottom:12px;
+  border-bottom:1.5px solid var(--border);
+}
+.skill-row{margin-bottom:18px;}
+.skill-top{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;}
+.skill-name{font-size:13px;color:var(--ink2);}
+.skill-pct{font-size:10px;color:var(--muted);letter-spacing:1px;}
+.skill-bar{height:3px;background:var(--border);position:relative;overflow:hidden;border-radius:2px;}
+.skill-fill{
+  height:100%;
+  background:linear-gradient(90deg,var(--amber),var(--teal));
+  transform:scaleX(0);transform-origin:left;
+  transition:transform 1.3s cubic-bezier(.16,1,.3,1);
+}
 
-    .hero-sub {
-      margin-top: 28px;
-      font-size: 13px;
-      color: var(--muted);
-      letter-spacing: 1px;
-      max-width: 340px;
-      line-height: 1.8;
-      opacity: 0;
-      animation: fadeUp 1s 0.7s forwards;
-    }
+/* ── TRAVEL SECTION ── */
+.travel-section{
+  padding:90px 48px;
+  background:var(--bg2);
+  border-top:1px solid var(--border);
+}
+.travel-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:20px;margin-top:56px;}
+.travel-card{
+  background:var(--paper);border:1.5px solid var(--border);
+  overflow:hidden;transition:border-color .3s,transform .3s;cursor:none;
+}
+.travel-card:hover{border-color:var(--amber);transform:translateY(-4px);}
+.travel-card-img{
+  aspect-ratio:16/9;display:flex;align-items:center;justify-content:center;
+  font-size:56px;position:relative;
+}
+.ti1{background:linear-gradient(135deg,#e8d5a3,#c9a86c);}
+.ti2{background:linear-gradient(135deg,#a3c8c4,#6ca8a3);}
+.ti3{background:linear-gradient(135deg,#c4a3c8,#a36ca8);}
+.ti4{background:linear-gradient(135deg,#c8c4a3,#a8a36c);}
+.travel-body{padding:20px;}
+.travel-loc{font-size:9px;letter-spacing:3px;text-transform:uppercase;color:var(--amber);margin-bottom:6px;}
+.travel-title{font-family:'Playfair Display',serif;font-size:17px;font-weight:700;color:var(--ink);line-height:1.3;margin-bottom:6px;}
+.travel-desc{font-size:12px;color:var(--muted);line-height:1.8;}
+.travel-meta{display:flex;justify-content:space-between;padding:14px 20px;border-top:1px solid var(--border);font-size:10px;letter-spacing:1px;color:var(--muted);}
 
-    .hero-cta {
-      margin-top: 48px;
-      display: flex;
-      align-items: center;
-      gap: 32px;
-      opacity: 0;
-      animation: fadeUp 1s 0.9s forwards;
-    }
+/* ── FOOTER ── */
+footer{
+  padding:52px 48px;border-top:1.5px solid var(--border);
+  display:flex;align-items:center;justify-content:space-between;
+  background:var(--ink);
+}
+.footer-logo{font-family:'Playfair Display',serif;font-size:18px;font-weight:700;color:#fff;}
+.footer-logo span{color:var(--amber);}
+.footer-copy{font-size:11px;color:rgba(255,255,255,.3);letter-spacing:1px;}
+.footer-links{display:flex;gap:20px;}
+.footer-links a{font-size:11px;letter-spacing:2px;text-transform:uppercase;color:rgba(255,255,255,.4);text-decoration:none;transition:color .3s;}
+.footer-links a:hover{color:var(--amber);}
 
-    .btn-primary {
-      background: var(--gold);
-      color: var(--bg);
-      text-decoration: none;
-      font-size: 11px;
-      letter-spacing: 3px;
-      text-transform: uppercase;
-      padding: 16px 36px;
-      font-weight: 500;
-      transition: background 0.3s, transform 0.2s;
-      display: inline-block;
-    }
-    .btn-primary:hover { background: #e0be87; transform: translateY(-2px); }
+/* REVEAL */
+.reveal{opacity:0;transform:translateY(24px);transition:opacity .85s,transform .85s;}
+.reveal.visible{opacity:1;transform:translateY(0);}
 
-    .btn-ghost {
-      color: var(--muted);
-      text-decoration: none;
-      font-size: 11px;
-      letter-spacing: 3px;
-      text-transform: uppercase;
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      transition: color 0.3s;
-    }
-    .btn-ghost:hover { color: var(--white); }
-    .btn-ghost::after {
-      content: '';
-      display: block;
-      width: 40px; height: 1px;
-      background: currentColor;
-      transition: width 0.3s;
-    }
-    .btn-ghost:hover::after { width: 60px; }
-
-    .scroll-hint {
-      position: absolute;
-      bottom: 80px; right: 48px;
-      writing-mode: vertical-rl;
-      font-size: 9px;
-      letter-spacing: 4px;
-      text-transform: uppercase;
-      color: var(--muted);
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      opacity: 0;
-      animation: fadeUp 1s 1.2s forwards;
-    }
-    .scroll-hint::before {
-      content: '';
-      display: block;
-      width: 1px; height: 48px;
-      background: var(--border);
-    }
-
-    @keyframes fadeUp {
-      from { opacity:0; transform: translateY(24px); }
-      to   { opacity:1; transform: translateY(0); }
-    }
-
-    /* ── STATS BAR ── */
-    .stats {
-      background: var(--surface);
-      border-top: 1px solid var(--border);
-      border-bottom: 1px solid var(--border);
-      padding: 32px 48px;
-      display: grid;
-      grid-template-columns: repeat(4, 1fr);
-      gap: 0;
-    }
-    .stat-item {
-      padding: 0 40px;
-      border-right: 1px solid var(--border);
-    }
-    .stat-item:first-child { padding-left: 0; }
-    .stat-item:last-child { border-right: none; }
-    .stat-num {
-      font-family: 'Cormorant Garamond', serif;
-      font-size: 40px;
-      font-weight: 300;
-      color: var(--white);
-      line-height: 1;
-    }
-    .stat-num span { color: var(--gold); font-size: 24px; }
-    .stat-label {
-      font-size: 10px;
-      letter-spacing: 2px;
-      text-transform: uppercase;
-      color: var(--muted);
-      margin-top: 6px;
-    }
-
-    /* ── 3D SECTION ── */
-    .kitchen-3d-section {
-      padding: 120px 48px;
-      position: relative;
-      overflow: hidden;
-    }
-
-    .section-header {
-      display: flex;
-      align-items: flex-end;
-      justify-content: space-between;
-      margin-bottom: 64px;
-    }
-    .section-tag {
-      font-size: 10px;
-      letter-spacing: 4px;
-      text-transform: uppercase;
-      color: var(--gold);
-      margin-bottom: 12px;
-    }
-    .section-title {
-      font-family: 'Cormorant Garamond', serif;
-      font-size: clamp(36px, 5vw, 64px);
-      font-weight: 300;
-      color: var(--white);
-      line-height: 1.1;
-    }
-    .section-desc {
-      max-width: 320px;
-      font-size: 13px;
-      color: var(--muted);
-      line-height: 1.9;
-      text-align: right;
-    }
-
-    #kitchen-canvas {
-      width: 100%;
-      height: 520px;
-      display: block;
-      border: 1px solid var(--border);
-      position: relative;
-    }
-
-    .canvas-hint {
-      text-align: center;
-      margin-top: 16px;
-      font-size: 10px;
-      letter-spacing: 3px;
-      text-transform: uppercase;
-      color: var(--muted);
-    }
-
-    /* ── FEATURES ── */
-    .features {
-      padding: 100px 48px;
-      display: grid;
-      grid-template-columns: repeat(3, 1fr);
-      gap: 1px;
-      background: var(--border);
-    }
-    .feature-card {
-      background: var(--bg);
-      padding: 48px 40px;
-      position: relative;
-      overflow: hidden;
-      transition: background 0.4s;
-    }
-    .feature-card::before {
-      content: '';
-      position: absolute;
-      top: 0; left: 0; right: 0;
-      height: 1px;
-      background: var(--gold);
-      transform: scaleX(0);
-      transform-origin: left;
-      transition: transform 0.5s;
-    }
-    .feature-card:hover { background: var(--surface); }
-    .feature-card:hover::before { transform: scaleX(1); }
-
-    .feature-num {
-      font-family: 'Cormorant Garamond', serif;
-      font-size: 48px;
-      color: var(--border);
-      line-height: 1;
-      margin-bottom: 24px;
-      transition: color 0.4s;
-    }
-    .feature-card:hover .feature-num { color: var(--gold-dim); }
-
-    .feature-title {
-      font-family: 'Cormorant Garamond', serif;
-      font-size: 22px;
-      color: var(--white);
-      margin-bottom: 12px;
-      font-weight: 400;
-    }
-    .feature-text {
-      font-size: 13px;
-      color: var(--muted);
-      line-height: 1.9;
-    }
-
-    /* ── PROCESS ── */
-    .process {
-      padding: 100px 48px;
-      background: var(--surface);
-      border-top: 1px solid var(--border);
-      border-bottom: 1px solid var(--border);
-    }
-    .process-grid {
-      display: grid;
-      grid-template-columns: repeat(4, 1fr);
-      gap: 0;
-      margin-top: 64px;
-    }
-    .process-step {
-      padding: 0 40px;
-      border-right: 1px solid var(--border);
-      position: relative;
-    }
-    .process-step:first-child { padding-left: 0; }
-    .process-step:last-child { border-right: none; }
-    .step-num {
-      font-family: 'Cormorant Garamond', serif;
-      font-size: 56px;
-      color: var(--border);
-      line-height: 1;
-      margin-bottom: 20px;
-    }
-    .step-title {
-      font-size: 14px;
-      color: var(--white);
-      letter-spacing: 1px;
-      margin-bottom: 10px;
-    }
-    .step-text { font-size: 12px; color: var(--muted); line-height: 1.9; }
-
-    /* ── FOOTER ── */
-    footer {
-      padding: 60px 48px;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      border-top: 1px solid var(--border);
-    }
-    .footer-logo {
-      font-family: 'Cormorant Garamond', serif;
-      font-size: 18px;
-      font-weight: 600;
-      color: var(--white);
-      letter-spacing: 3px;
-      text-transform: uppercase;
-    }
-    .footer-logo span { color: var(--gold); }
-    .footer-text { font-size: 11px; color: var(--muted); letter-spacing: 1px; }
-    .footer-links { display: flex; gap: 24px; }
-    .footer-links a {
-      font-size: 11px;
-      color: var(--muted);
-      text-decoration: none;
-      letter-spacing: 1px;
-      transition: color 0.3s;
-    }
-    .footer-links a:hover { color: var(--gold); }
-
-    /* ── SCROLL REVEAL ── */
-    .reveal {
-      opacity: 0;
-      transform: translateY(32px);
-      transition: opacity 0.8s, transform 0.8s;
-    }
-    .reveal.visible { opacity: 1; transform: translateY(0); }
-
-    /* ── RESPONSIVE ── */
-    @media (max-width: 768px) {
-      nav { padding: 20px 24px; }
-      .nav-links { display: none; }
-      .hero { padding: 0 24px 64px; }
-      .stats { grid-template-columns: repeat(2,1fr); padding: 24px; }
-      .kitchen-3d-section { padding: 80px 24px; }
-      .section-header { flex-direction: column; align-items: flex-start; gap: 20px; }
-      .section-desc { text-align: left; }
-      .features { grid-template-columns: 1fr; padding: 60px 24px; }
-      .process-grid { grid-template-columns: 1fr 1fr; gap: 40px; }
-      .process-step { border-right: none; padding: 0; }
-      footer { flex-direction: column; gap: 24px; text-align: center; padding: 40px 24px; }
-      .dropdown { width: 280px; right: -24px; }
-    }
-  </style>
+@media(max-width:900px){
+  .hero{grid-template-columns:1fr;padding:100px 24px 60px;gap:40px;}
+  .hero-right{display:none;}
+  nav{padding:18px 24px;}
+  .map-section,.projects-section,.skills-section,.travel-section{padding:70px 24px;}
+  .project-card.featured{grid-column:auto;display:block;}
+  .feat-img{margin-top:24px;}
+  footer{flex-direction:column;gap:20px;padding:40px 24px;text-align:center;}
+  .nav-panel{right:0;width:calc(100vw - 32px);}
+  .divider{margin:0 24px;}
+}
+</style>
 </head>
 <body>
 
-  <!-- Cursor -->
-  <div class="cursor" id="cursor"></div>
-  <div class="cursor-ring" id="cursor-ring"></div>
+<div id="cur"></div>
+<div id="cur-r"></div>
+<div id="map-tooltip"></div>
 
-  <!-- NAV -->
-  <nav>
-    <div class="nav-logo">Jonas <span>Küchen</span></div>
-    <div class="nav-right">
-      <ul class="nav-links">
-        <li><a href="#modelle">Modelle</a></li>
-        <li><a href="#leistungen">Leistungen</a></li>
-        <li><a href="#prozess">Prozess</a></li>
-      </ul>
-      <div class="contact-wrap">
-        <button class="contact-btn" id="contactBtn">Kontakt ↓</button>
-        <div class="dropdown" id="dropdown">
-          <h3>Küche anfragen</h3>
-          <div class="form-group">
-            <label>Name</label>
-            <input type="text" placeholder="Ihr Name"/>
-          </div>
-          <div class="form-group">
-            <label>E-Mail</label>
-            <input type="email" placeholder="ihre@email.de"/>
-          </div>
-          <div class="form-group">
-            <label>Küchentyp</label>
-            <select>
-              <option>Moderne Küche</option>
-              <option>Landhausküche</option>
-              <option>Industrialküche</option>
-              <option>Einbauküche</option>
-              <option>Sonstiges</option>
-            </select>
-          </div>
-          <div class="form-group">
-            <label>Nachricht</label>
-            <textarea placeholder="Beschreiben Sie Ihre Vorstellung…"></textarea>
-          </div>
-          <button class="submit-btn">Anfrage senden</button>
-        </div>
+<!-- ── NAV ── -->
+<nav>
+  <div class="nav-logo">Luis <span>Genenger</span></div>
+  <div class="nav-right">
+    <button class="nav-pill" data-panel="contact">Kontakt</button>
+    <button class="nav-pill" data-panel="certs">Zertifikate</button>
+  </div>
+</nav>
+
+<!-- CONTACT PANEL -->
+<div class="nav-panel" id="panel-contact">
+  <div class="panel-title">Schreib mir</div>
+  <div class="f-group"><label>Name</label><input type="text" placeholder="Dein Name"/></div>
+  <div class="f-group"><label>E-Mail</label><input type="email" placeholder="deine@email.de"/></div>
+  <div class="f-group"><label>Betreff</label>
+    <select><option>Projekt-Anfrage</option><option>Zusammenarbeit</option><option>Reise-Austausch</option><option>Sonstiges</option></select>
+  </div>
+  <div class="f-group"><label>Nachricht</label><textarea placeholder="Was hast du vor?"></textarea></div>
+  <button class="f-submit">Senden →</button>
+</div>
+
+<!-- CERTS PANEL -->
+<div class="nav-panel" id="panel-certs">
+  <div class="panel-title">Zertifikate</div>
+  <div class="cert-list">
+    <div class="cert-item"><div class="cert-icon">🎓</div><div><div class="cert-name">B.Sc. Wirtschaftsinformatik</div><div class="cert-org">Möfa Köln · Sep 2025</div></div><div class="cert-badge">Bald fertig</div></div>
+    <div class="cert-item"><div class="cert-icon">☁️</div><div><div class="cert-name">AWS Cloud Practitioner</div><div class="cert-org">Amazon Web Services</div></div><div class="cert-badge">Certified</div></div>
+    <div class="cert-item"><div class="cert-icon">📊</div><div><div class="cert-name">Google Data Analytics</div><div class="cert-org">Google / Coursera</div></div><div class="cert-badge">Certified</div></div>
+    <div class="cert-item"><div class="cert-icon">⚡</div><div><div class="cert-name">Scrum Foundation</div><div class="cert-org">CertiProf</div></div><div class="cert-badge">Certified</div></div>
+  </div>
+</div>
+
+<!-- ── HERO ── -->
+<section class="hero">
+  <div class="hero-left">
+    <div class="hero-stamp">Wirtschaftsinformatiker · Digital Nomad</div>
+    <h1 class="hero-title">
+      Luis<br>
+      <span class="outline">Gen</span><em>enger</em><span style="color:var(--amber)">.</span>
+    </h1>
+    <p class="hero-role">WI Bachelor · Köln · Remote-First</p>
+    <p class="hero-desc">
+      Ich baue digitale Produkte, analysiere Daten — und erkunde nebenbei die Welt.
+      Fertig im September 2025. Ziel: ortsunabhängig leben und arbeiten.
+    </p>
+    <div class="hero-cta">
+      <a href="#map-sec" class="btn-main">Meine Reisen</a>
+      <a href="#projects" class="btn-sec">Projekte</a>
+    </div>
+  </div>
+  <div class="hero-right">
+    <div class="explorer-card">
+      <div class="ec-stat">
+        <div class="ec-num" id="hero-country-count">13<span>+</span></div>
+        <div class="ec-label">Länder bereist</div>
+      </div>
+      <div class="ec-stat">
+        <div class="ec-num">4<span>yr</span></div>
+        <div class="ec-label">Reiseerfahrung</div>
+      </div>
+      <div class="ec-stat">
+        <div class="ec-num">Sep<span>'25</span></div>
+        <div class="ec-label">Bachelor Abschluss</div>
+      </div>
+      <div class="ec-tags">
+        <span class="ec-tag">React</span>
+        <span class="ec-tag">Python</span>
+        <span class="ec-tag">SQL</span>
+        <span class="ec-tag">Azure</span>
+        <span class="ec-tag hi">✈ Remote</span>
+        <span class="ec-tag hi">🌍 Nomad</span>
       </div>
     </div>
-  </nav>
+  </div>
+</section>
 
-  <!-- HERO -->
-  <section class="hero">
-    <div class="hero-bg"></div>
-    <div class="hero-line"></div>
-    <div class="hero-tag">Möfa Köln — Maßgefertigte Küchen</div>
-    <h1 class="hero-title">Küchen die<br><em>bleiben.</em></h1>
-    <p class="hero-sub">Handverlesene Materialien. Präzise Planung. Küchen, die Räume definieren — gefertigt für Menschen mit Anspruch.</p>
-    <div class="hero-cta">
-      <a href="#modelle" class="btn-primary">Modelle entdecken</a>
-      <a href="#prozess" class="btn-ghost">Wie es funktioniert</a>
-    </div>
-    <div class="scroll-hint">Scroll</div>
-  </section>
+<div class="divider"></div>
 
-  <!-- STATS -->
-  <div class="stats reveal">
-    <div class="stat-item">
-      <div class="stat-num">120<span>+</span></div>
-      <div class="stat-label">Projekte realisiert</div>
-    </div>
-    <div class="stat-item">
-      <div class="stat-num">4<span>yr</span></div>
-      <div class="stat-label">Erfahrung</div>
-    </div>
-    <div class="stat-item">
-      <div class="stat-num">100<span>%</span></div>
-      <div class="stat-label">Kundenzufriedenheit</div>
-    </div>
-    <div class="stat-item">
-      <div class="stat-num">Köln</div>
-      <div class="stat-label">Möfa Köln, NRW</div>
+<!-- ── MAP SECTION ── -->
+<section class="map-section" id="map-sec">
+  <div class="reveal">
+    <div class="sec-eyebrow">Meine Welt</div>
+    <h2 class="sec-title">Bisher erkundet</h2>
+    <div class="map-counter">
+      <div class="map-count-num" id="visitedNum">13</div>
+      <div class="map-count-total">/195</div>
+      <div class="map-count-label">Länder</div>
     </div>
   </div>
 
-  <!-- 3D SECTION -->
-  <section class="kitchen-3d-section" id="modelle">
-    <div class="section-header reveal">
+  <div class="map-container reveal">
+    <svg id="world-map"></svg>
+  </div>
+
+  <div class="map-controls reveal">
+    <button class="map-btn active-mode" id="btn-view">🗺 Ansehen</button>
+    <button class="map-btn" id="btn-edit">✏️ Länder bearbeiten</button>
+    <span class="mode-hint" id="mode-hint">Hover über ein Land für den Namen</span>
+  </div>
+
+  <div class="map-legend reveal">
+    <div style="display:flex;align-items:center;gap:8px;"><div class="leg-swatch" style="background:var(--amber);opacity:.7;"></div> Besucht</div>
+    <div style="display:flex;align-items:center;gap:8px;"><div class="leg-swatch" style="background:var(--teal);"></div> Highlight / Aktuell</div>
+    <div style="display:flex;align-items:center;gap:8px;"><div class="leg-swatch" style="background:var(--border);"></div> Noch auf der Liste</div>
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<!-- ── PROJECTS ── -->
+<section class="projects-section" id="projects">
+  <div class="reveal">
+    <div class="sec-eyebrow">Portfolio</div>
+    <h2 class="sec-title">Was ich gebaut habe</h2>
+  </div>
+  <div class="projects-grid">
+    <div class="project-card featured reveal">
       <div>
-        <div class="section-tag">Interaktives Modell</div>
-        <h2 class="section-title">Erleben Sie<br>Ihre Küche in 3D</h2>
+        <div class="project-num">Featured — I.</div>
+        <h3 class="project-title">Enterprise Software Distribution</h3>
+        <p class="project-desc">Analyse & Konzeption zur Bereitstellung von Enterprise-Software via Microsoft Store und Azure Marketplace. Bachelorarbeit mit Design Science Research Methodik.</p>
+        <div class="project-tags"><span class="p-tag">Research</span><span class="p-tag">Azure</span><span class="p-tag">Microsoft Store</span><span class="p-tag">DSR</span></div>
+        <a href="#" class="project-link">Mehr erfahren</a>
       </div>
-      <p class="section-desc">Drehen und erkunden Sie das Modell. Jede Küche wird individuell nach Ihren Wünschen geplant und gefertigt.</p>
+      <div class="feat-img">📊</div>
     </div>
-    <canvas id="kitchen-canvas"></canvas>
-    <p class="canvas-hint">↺ Modell drehen — Klicken & Ziehen</p>
-  </section>
-
-  <!-- FEATURES -->
-  <section class="features" id="leistungen">
-    <div class="feature-card reveal">
-      <div class="feature-num">01</div>
-      <h3 class="feature-title">Maßanfertigung</h3>
-      <p class="feature-text">Jede Küche entsteht nach Ihren exakten Raummaßen und persönlichen Vorstellungen — kein Kompromiss.</p>
+    <div class="project-card reveal">
+      <div class="project-num">II.</div>
+      <h3 class="project-title">Travel Analytics Dashboard</h3>
+      <p class="project-desc">Dashboard zur Visualisierung meiner Reisedaten — Routen, Kosten, CO₂ und Highlights pro Land.</p>
+      <div class="project-tags"><span class="p-tag">React</span><span class="p-tag">D3.js</span><span class="p-tag">Python</span></div>
+      <a href="#" class="project-link">Ansehen</a>
     </div>
-    <div class="feature-card reveal" style="transition-delay: 0.1s">
-      <div class="feature-num">02</div>
-      <h3 class="feature-title">Premium Materialien</h3>
-      <p class="feature-text">Von massiver Eiche bis zum Hochglanzlack — wir wählen gemeinsam mit Ihnen Oberflächen aus, die Jahrzehnte halten.</p>
+    <div class="project-card reveal" style="transition-delay:.1s">
+      <div class="project-num">III.</div>
+      <h3 class="project-title">Automatisiertes Reporting</h3>
+      <p class="project-desc">Python-Tool zur automatisierten Erstellung von Business Reports mit KPI-Tracking und E-Mail-Versand.</p>
+      <div class="project-tags"><span class="p-tag">Python</span><span class="p-tag">Pandas</span><span class="p-tag">Automation</span></div>
+      <a href="#" class="project-link">GitHub</a>
     </div>
-    <div class="feature-card reveal" style="transition-delay: 0.2s">
-      <div class="feature-num">03</div>
-      <h3 class="feature-title">Vollmontage</h3>
-      <p class="feature-text">Planung, Lieferung und professionelle Montage aus einer Hand — Sie lehnen sich zurück.</p>
+    <div class="project-card reveal" style="transition-delay:.15s">
+      <div class="project-num">IV.</div>
+      <h3 class="project-title">Remote-First SaaS Konzept</h3>
+      <p class="project-desc">Business Plan & MVP-Konzept für ein remote-first SaaS-Produkt im B2B-Bereich als Semesterprojekt.</p>
+      <div class="project-tags"><span class="p-tag">Business Model</span><span class="p-tag">UX</span><span class="p-tag">Figma</span></div>
+      <a href="#" class="project-link">Case Study</a>
     </div>
-  </section>
+  </div>
+</section>
 
-  <!-- PROCESS -->
-  <section class="process" id="prozess">
-    <div class="section-header reveal">
-      <div>
-        <div class="section-tag">Ablauf</div>
-        <h2 class="section-title">Von der Idee<br>zur fertigen Küche</h2>
-      </div>
+<!-- ── SKILLS ── -->
+<section class="skills-section" id="skills">
+  <div class="reveal">
+    <div class="sec-eyebrow">Kenntnisse</div>
+    <h2 class="sec-title">Was ich kann</h2>
+  </div>
+  <div class="skills-grid">
+    <div class="skill-group reveal">
+      <div class="skill-group-title">Development</div>
+      <div class="skill-row"><div class="skill-top"><span class="skill-name">Python</span><span class="skill-pct">85%</span></div><div class="skill-bar"><div class="skill-fill" data-w=".85"></div></div></div>
+      <div class="skill-row"><div class="skill-top"><span class="skill-name">JavaScript / React</span><span class="skill-pct">75%</span></div><div class="skill-bar"><div class="skill-fill" data-w=".75"></div></div></div>
+      <div class="skill-row"><div class="skill-top"><span class="skill-name">SQL & Datenbanken</span><span class="skill-pct">80%</span></div><div class="skill-bar"><div class="skill-fill" data-w=".80"></div></div></div>
+      <div class="skill-row"><div class="skill-top"><span class="skill-name">HTML / CSS</span><span class="skill-pct">88%</span></div><div class="skill-bar"><div class="skill-fill" data-w=".88"></div></div></div>
     </div>
-    <div class="process-grid">
-      <div class="process-step reveal">
-        <div class="step-num">01</div>
-        <div class="step-title">Erstgespräch</div>
-        <p class="step-text">Kostenlose Beratung vor Ort in Köln oder per Video-Call. Wir hören zu.</p>
-      </div>
-      <div class="process-step reveal" style="transition-delay:0.1s">
-        <div class="step-num">02</div>
-        <div class="step-title">3D-Planung</div>
-        <p class="step-text">Digitale Visualisierung Ihrer Küche — Sie sehen das Ergebnis bevor ein einziges Brett gesägt wird.</p>
-      </div>
-      <div class="process-step reveal" style="transition-delay:0.2s">
-        <div class="step-num">03</div>
-        <div class="step-title">Fertigung</div>
-        <p class="step-text">Präzise Verarbeitung mit hochwertigen Materialien — gefertigt mit Sorgfalt.</p>
-      </div>
-      <div class="process-step reveal" style="transition-delay:0.3s">
-        <div class="step-num">04</div>
-        <div class="step-title">Montage & Übergabe</div>
-        <p class="step-text">Fachgerechte Montage und persönliche Übergabe. Ihre Küche, fertig zum Einzug.</p>
-      </div>
+    <div class="skill-group reveal" style="transition-delay:.1s">
+      <div class="skill-group-title">Business & Analytics</div>
+      <div class="skill-row"><div class="skill-top"><span class="skill-name">Data Analysis</span><span class="skill-pct">82%</span></div><div class="skill-bar"><div class="skill-fill" data-w=".82"></div></div></div>
+      <div class="skill-row"><div class="skill-top"><span class="skill-name">Business Strategy</span><span class="skill-pct">78%</span></div><div class="skill-bar"><div class="skill-fill" data-w=".78"></div></div></div>
+      <div class="skill-row"><div class="skill-top"><span class="skill-name">Projektmanagement</span><span class="skill-pct">72%</span></div><div class="skill-bar"><div class="skill-fill" data-w=".72"></div></div></div>
+      <div class="skill-row"><div class="skill-top"><span class="skill-name">Excel / Power BI</span><span class="skill-pct">85%</span></div><div class="skill-bar"><div class="skill-fill" data-w=".85"></div></div></div>
     </div>
-  </section>
-
-  <!-- FOOTER -->
-  <footer>
-    <div class="footer-logo">Jonas <span>Küchen</span></div>
-    <div class="footer-text">© 2025 Jonas Küchen · Möfa Köln</div>
-    <div class="footer-links">
-      <a href="#">Impressum</a>
-      <a href="#">Datenschutz</a>
-      <a href="#">Instagram</a>
+    <div class="skill-group reveal" style="transition-delay:.2s">
+      <div class="skill-group-title">Cloud & Tools</div>
+      <div class="skill-row"><div class="skill-top"><span class="skill-name">AWS / Azure</span><span class="skill-pct">65%</span></div><div class="skill-bar"><div class="skill-fill" data-w=".65"></div></div></div>
+      <div class="skill-row"><div class="skill-top"><span class="skill-name">Git & GitHub</span><span class="skill-pct">80%</span></div><div class="skill-bar"><div class="skill-fill" data-w=".80"></div></div></div>
+      <div class="skill-row"><div class="skill-top"><span class="skill-name">Figma / Design</span><span class="skill-pct">60%</span></div><div class="skill-bar"><div class="skill-fill" data-w=".60"></div></div></div>
+      <div class="skill-row"><div class="skill-top"><span class="skill-name">Scrum / Agile</span><span class="skill-pct">75%</span></div><div class="skill-bar"><div class="skill-fill" data-w=".75"></div></div></div>
     </div>
-  </footer>
+  </div>
+</section>
 
-  <script>
-    // ── CURSOR ──
-    const cursor = document.getElementById('cursor');
-    const ring   = document.getElementById('cursor-ring');
-    let mx = 0, my = 0, rx = 0, ry = 0;
+<!-- ── TRAVEL ── -->
+<section class="travel-section" id="travel">
+  <div class="reveal">
+    <div class="sec-eyebrow">Reisen & Abenteuer</div>
+    <h2 class="sec-title">Letzte Destinationen</h2>
+  </div>
+  <div class="travel-grid">
+    <div class="travel-card reveal"><div class="travel-card-img ti1">🇯🇵</div><div class="travel-body"><div class="travel-loc">Japan · Asien</div><div class="travel-title">Tokyo & Kyoto — Kontraste einer anderen Welt</div><div class="travel-desc">3 Wochen zwischen Hightech-Metropole und jahrhundertealten Tempeln.</div></div><div class="travel-meta"><span>Feb 2025</span><span>8 min →</span></div></div>
+    <div class="travel-card reveal" style="transition-delay:.08s"><div class="travel-card-img ti2">🇹🇭</div><div class="travel-body"><div class="travel-loc">Thailand · Asien</div><div class="travel-title">Chiang Mai — Das Mekka der Digital Nomads</div><div class="travel-desc">Warum Chiang Mai der perfekte Start für Remote Work ist.</div></div><div class="travel-meta"><span>Nov 2024</span><span>6 min →</span></div></div>
+    <div class="travel-card reveal" style="transition-delay:.16s"><div class="travel-card-img ti3">🇵🇹</div><div class="travel-body"><div class="travel-loc">Portugal · Europa</div><div class="travel-title">Lissabon — Europas Startup-Hauptstadt</div><div class="travel-desc">Ein Monat in der lebendigsten Startup-Szene Europas.</div></div><div class="travel-meta"><span>Aug 2024</span><span>5 min →</span></div></div>
+    <div class="travel-card reveal" style="transition-delay:.24s"><div class="travel-card-img ti4">🇦🇪</div><div class="travel-body"><div class="travel-loc">UAE · Naher Osten</div><div class="travel-title">Dubai — Business & Exzess</div><div class="travel-desc">Was das Business-Ökosystem in Dubai wirklich ausmacht.</div></div><div class="travel-meta"><span>Jun 2024</span><span>4 min →</span></div></div>
+  </div>
+</section>
 
-    document.addEventListener('mousemove', e => { mx = e.clientX; my = e.clientY; });
+<!-- ── FOOTER ── -->
+<footer>
+  <div class="footer-logo">Luis <span>Genenger</span></div>
+  <div class="footer-copy">© 2025 · WI · Köln</div>
+  <div class="footer-links"><a href="#">LinkedIn</a><a href="#">GitHub</a><a href="#">Instagram</a></div>
+</footer>
 
-    function animCursor() {
-      cursor.style.left = mx + 'px';
-      cursor.style.top  = my + 'px';
-      rx += (mx - rx) * 0.12;
-      ry += (my - ry) * 0.12;
-      ring.style.left = rx + 'px';
-      ring.style.top  = ry + 'px';
-      requestAnimationFrame(animCursor);
-    }
-    animCursor();
+<script>
+// ── CURSOR ──
+const cur=document.getElementById('cur'),curR=document.getElementById('cur-r');
+let mx=0,my=0,rx=0,ry=0;
+document.addEventListener('mousemove',e=>{mx=e.clientX;my=e.clientY;});
+(function loop(){
+  cur.style.left=mx+'px';cur.style.top=my+'px';
+  rx+=(mx-rx)*.12;ry+=(my-ry)*.12;
+  curR.style.left=rx+'px';curR.style.top=ry+'px';
+  requestAnimationFrame(loop);
+})();
+document.querySelectorAll('a,button,input,select,textarea,.project-card,.travel-card').forEach(el=>{
+  el.addEventListener('mouseenter',()=>{cur.style.transform='translate(-50%,-50%) scale(2.5)';cur.style.opacity='.5';});
+  el.addEventListener('mouseleave',()=>{cur.style.transform='translate(-50%,-50%) scale(1)';cur.style.opacity='1';});
+});
 
-    document.querySelectorAll('a,button,input,select,textarea').forEach(el => {
-      el.addEventListener('mouseenter', () => {
-        cursor.style.transform = 'translate(-50%,-50%) scale(2.5)';
-        cursor.style.opacity = '0.5';
+// ── NAV PANELS ──
+document.querySelectorAll('.nav-pill').forEach(btn=>{
+  btn.addEventListener('click',e=>{
+    e.stopPropagation();
+    const pid='panel-'+btn.dataset.panel;
+    const panel=document.getElementById(pid);
+    const isOpen=panel.classList.contains('open');
+    document.querySelectorAll('.nav-panel').forEach(p=>p.classList.remove('open'));
+    document.querySelectorAll('.nav-pill').forEach(b=>b.classList.remove('active'));
+    if(!isOpen){panel.classList.add('open');btn.classList.add('active');}
+  });
+});
+document.addEventListener('click',()=>{
+  document.querySelectorAll('.nav-panel').forEach(p=>p.classList.remove('open'));
+  document.querySelectorAll('.nav-pill').forEach(b=>b.classList.remove('active'));
+});
+document.querySelectorAll('.nav-panel').forEach(p=>p.addEventListener('click',e=>e.stopPropagation()));
+
+// ── VISITED COUNTRIES ──
+// ISO alpha-2 codes of visited countries
+let visited = new Set([
+  'DE','PT','JP','TH','AE','ES','IT','FR','GB','NL','GR','TR','AT'
+]);
+const highlight = new Set(['JP']); // pulse/teal highlight
+let editMode = false;
+
+function updateCounter(){
+  document.getElementById('visitedNum').textContent = visited.size;
+  document.getElementById('hero-country-count').innerHTML = visited.size+'<span>+</span>';
+}
+
+// ── D3 WORLD MAP ──
+const tooltip = document.getElementById('map-tooltip');
+const svgEl = document.getElementById('world-map');
+
+// Use Natural Earth projection via D3
+const width = 960, height = 480;
+const svg = d3.select('#world-map')
+  .attr('viewBox', `0 0 ${width} ${height}`)
+  .attr('preserveAspectRatio','xMidYMid meet');
+
+const projection = d3.geoNaturalEarth1()
+  .scale(153)
+  .translate([width/2, height/2]);
+
+const path = d3.geoPath().projection(projection);
+
+// Fetch world topojson from CDN
+fetch('https://cdn.jsdelivr.net/npm/world-atlas@2/countries-110m.json')
+  .then(r=>r.json())
+  .then(world=>{
+    const countries = topojson.feature(world, world.objects.countries);
+
+    // Country name lookup (ISO numeric → alpha2 + name)
+    // We embed a minimal lookup table
+    const numToInfo = {
+      4:{a2:'AF',name:'Afghanistan'},8:{a2:'AL',name:'Albanien'},12:{a2:'DZ',name:'Algerien'},
+      24:{a2:'AO',name:'Angola'},32:{a2:'AR',name:'Argentinien'},36:{a2:'AU',name:'Australien'},
+      40:{a2:'AT',name:'Österreich'},50:{a2:'BD',name:'Bangladesch'},56:{a2:'BE',name:'Belgien'},
+      68:{a2:'BO',name:'Bolivien'},76:{a2:'BR',name:'Brasilien'},100:{a2:'BG',name:'Bulgarien'},
+      116:{a2:'KH',name:'Kambodscha'},120:{a2:'CM',name:'Kamerun'},124:{a2:'CA',name:'Kanada'},
+      144:{a2:'LK',name:'Sri Lanka'},152:{a2:'CL',name:'Chile'},156:{a2:'CN',name:'China'},
+      170:{a2:'CO',name:'Kolumbien'},180:{a2:'CD',name:'DR Kongo'},191:{a2:'HR',name:'Kroatien'},
+      192:{a2:'CU',name:'Kuba'},203:{a2:'CZ',name:'Tschechien'},204:{a2:'BJ',name:'Benin'},
+      208:{a2:'DK',name:'Dänemark'},218:{a2:'EC',name:'Ecuador'},818:{a2:'EG',name:'Ägypten'},
+      231:{a2:'ET',name:'Äthiopien'},246:{a2:'FI',name:'Finnland'},250:{a2:'FR',name:'Frankreich'},
+      266:{a2:'GA',name:'Gabun'},276:{a2:'DE',name:'Deutschland'},288:{a2:'GH',name:'Ghana'},
+      300:{a2:'GR',name:'Griechenland'},320:{a2:'GT',name:'Guatemala'},324:{a2:'GN',name:'Guinea'},
+      340:{a2:'HN',name:'Honduras'},348:{a2:'HU',name:'Ungarn'},356:{a2:'IN',name:'Indien'},
+      360:{a2:'ID',name:'Indonesien'},364:{a2:'IR',name:'Iran'},368:{a2:'IQ',name:'Irak'},
+      372:{a2:'IE',name:'Irland'},376:{a2:'IL',name:'Israel'},380:{a2:'IT',name:'Italien'},
+      388:{a2:'JM',name:'Jamaika'},392:{a2:'JP',name:'Japan'},400:{a2:'JO',name:'Jordanien'},
+      404:{a2:'KE',name:'Kenia'},408:{a2:'KP',name:'Nordkorea'},410:{a2:'KR',name:'Südkorea'},
+      116:{a2:'KH',name:'Kambodscha'},418:{a2:'LA',name:'Laos'},422:{a2:'LB',name:'Libanon'},
+      430:{a2:'LR',name:'Liberia'},434:{a2:'LY',name:'Libyen'},450:{a2:'MG',name:'Madagaskar'},
+      454:{a2:'MW',name:'Malawi'},458:{a2:'MY',name:'Malaysia'},484:{a2:'MX',name:'Mexiko'},
+      504:{a2:'MA',name:'Marokko'},508:{a2:'MZ',name:'Mosambik'},516:{a2:'NA',name:'Namibia'},
+      524:{a2:'NP',name:'Nepal'},528:{a2:'NL',name:'Niederlande'},554:{a2:'NZ',name:'Neuseeland'},
+      558:{a2:'NI',name:'Nicaragua'},562:{a2:'NE',name:'Niger'},566:{a2:'NG',name:'Nigeria'},
+      578:{a2:'NO',name:'Norwegen'},586:{a2:'PK',name:'Pakistan'},591:{a2:'PA',name:'Panama'},
+      598:{a2:'PG',name:'Papua-Neuguinea'},604:{a2:'PE',name:'Peru'},608:{a2:'PH',name:'Philippinen'},
+      616:{a2:'PL',name:'Polen'},620:{a2:'PT',name:'Portugal'},630:{a2:'PR',name:'Puerto Rico'},
+      634:{a2:'QA',name:'Katar'},642:{a2:'RO',name:'Rumänien'},643:{a2:'RU',name:'Russland'},
+      682:{a2:'SA',name:'Saudi-Arabien'},686:{a2:'SN',name:'Senegal'},694:{a2:'SL',name:'Sierra Leone'},
+      706:{a2:'SO',name:'Somalia'},710:{a2:'ZA',name:'Südafrika'},724:{a2:'ES',name:'Spanien'},
+      729:{a2:'SD',name:'Sudan'},752:{a2:'SE',name:'Schweden'},756:{a2:'CH',name:'Schweiz'},
+      760:{a2:'SY',name:'Syrien'},764:{a2:'TH',name:'Thailand'},788:{a2:'TN',name:'Tunesien'},
+      792:{a2:'TR',name:'Türkei'},800:{a2:'UG',name:'Uganda'},804:{a2:'UA',name:'Ukraine'},
+      784:{a2:'AE',name:'UAE'},826:{a2:'GB',name:'Großbritannien'},834:{a2:'TZ',name:'Tansania'},
+      840:{a2:'US',name:'USA'},858:{a2:'UY',name:'Uruguay'},862:{a2:'VE',name:'Venezuela'},
+      704:{a2:'VN',name:'Vietnam'},887:{a2:'YE',name:'Jemen'},894:{a2:'ZM',name:'Sambia'},
+      716:{a2:'ZW',name:'Simbabwe'},32:{a2:'AR',name:'Argentinien'},76:{a2:'BR',name:'Brasilien'}
+    };
+
+    // Draw graticule
+    const graticule = d3.geoGraticule()();
+    svg.append('path').datum(graticule)
+      .attr('d', path)
+      .attr('fill','none')
+      .attr('stroke','#ddd5c0')
+      .attr('stroke-width','.3')
+      .attr('opacity','.5');
+
+    // Draw countries
+    svg.selectAll('.country')
+      .data(countries.features)
+      .enter().append('path')
+      .attr('class','country-path')
+      .attr('d', path)
+      .attr('data-id', d=>{
+        const info = numToInfo[+d.id];
+        return info ? info.a2 : '';
+      })
+      .attr('data-name', d=>{
+        const info = numToInfo[+d.id];
+        return info ? info.name : 'Unbekannt';
+      })
+      .style('fill', d=>{
+        const info = numToInfo[+d.id];
+        if(!info) return '#e0d8c8';
+        if(highlight.has(info.a2)) return '#2a7c6f';
+        if(visited.has(info.a2)) return '#c47c2b';
+        return '#e0d8c8';
+      })
+      .style('stroke','#c4b898')
+      .style('stroke-width','.4')
+      .style('cursor', 'pointer')
+      .style('transition','fill .3s')
+      .on('mouseover', function(event, d){
+        const info = numToInfo[+d.id];
+        const name = info ? info.name : '';
+        const a2 = info ? info.a2 : '';
+        const isV = visited.has(a2);
+        if(name){
+          tooltip.textContent = (isV ? '✓ ' : '') + name;
+          tooltip.style.opacity = '1';
+        }
+        if(!editMode){
+          d3.select(this).style('fill', d=>{
+            const inf = numToInfo[+d.id];
+            if(!inf) return '#cfc7b5';
+            if(highlight.has(inf.a2)) return '#236b5f';
+            if(visited.has(inf.a2)) return '#b36d20';
+            return '#cfc7b5';
+          });
+        }
+      })
+      .on('mousemove', function(event){
+        tooltip.style.left = (event.clientX+14)+'px';
+        tooltip.style.top = (event.clientY-10)+'px';
+      })
+      .on('mouseout', function(event, d){
+        tooltip.style.opacity='0';
+        updateMapColors();
+      })
+      .on('click', function(event, d){
+        if(!editMode) return;
+        const info = numToInfo[+d.id];
+        if(!info || !info.a2) return;
+        const a2 = info.a2;
+        if(visited.has(a2)) visited.delete(a2);
+        else visited.add(a2);
+        updateCounter();
+        updateMapColors();
       });
-      el.addEventListener('mouseleave', () => {
-        cursor.style.transform = 'translate(-50%,-50%) scale(1)';
-        cursor.style.opacity = '1';
+
+    // Sphere outline
+    svg.append('path')
+      .datum({type:'Sphere'})
+      .attr('d', path)
+      .attr('fill','none')
+      .attr('stroke','#c4b898')
+      .attr('stroke-width','.8');
+
+    updateMapColors();
+  })
+  .catch(()=>{
+    // Fallback if CDN fails
+    svgEl.parentElement.innerHTML='<div style="padding:60px;text-align:center;color:var(--muted);font-size:13px;letter-spacing:2px;">Karte lädt... Bitte Internetverbindung prüfen.</div>';
+  });
+
+// topojson minimal inline (needed for the fetch above)
+// We load it from CDN
+const topoScript = document.createElement('script');
+topoScript.src = 'https://cdnjs.cloudflare.com/ajax/libs/topojson/3.0.2/topojson.min.js';
+topoScript.onload = () => {
+  // re-trigger fetch after topojson loads
+  initMap();
+};
+document.head.appendChild(topoScript);
+
+function initMap(){
+  fetch('https://cdn.jsdelivr.net/npm/world-atlas@2/countries-110m.json')
+    .then(r=>r.json())
+    .then(world=>{
+      svg.selectAll('*').remove();
+
+      const countries = topojson.feature(world, world.objects.countries);
+      const borders = topojson.mesh(world, world.objects.countries, (a,b)=>a!==b);
+
+      const numToInfo = {
+        4:{a2:'AF',name:'Afghanistan'},8:{a2:'AL',name:'Albanien'},12:{a2:'DZ',name:'Algerien'},
+        24:{a2:'AO',name:'Angola'},32:{a2:'AR',name:'Argentinien'},36:{a2:'AU',name:'Australien'},
+        40:{a2:'AT',name:'Österreich'},50:{a2:'BD',name:'Bangladesch'},56:{a2:'BE',name:'Belgien'},
+        68:{a2:'BO',name:'Bolivien'},76:{a2:'BR',name:'Brasilien'},100:{a2:'BG',name:'Bulgarien'},
+        116:{a2:'KH',name:'Kambodscha'},120:{a2:'CM',name:'Kamerun'},124:{a2:'CA',name:'Kanada'},
+        144:{a2:'LK',name:'Sri Lanka'},152:{a2:'CL',name:'Chile'},156:{a2:'CN',name:'China'},
+        170:{a2:'CO',name:'Kolumbien'},180:{a2:'CD',name:'DR Kongo'},191:{a2:'HR',name:'Kroatien'},
+        192:{a2:'CU',name:'Kuba'},203:{a2:'CZ',name:'Tschechien'},208:{a2:'DK',name:'Dänemark'},
+        218:{a2:'EC',name:'Ecuador'},818:{a2:'EG',name:'Ägypten'},231:{a2:'ET',name:'Äthiopien'},
+        246:{a2:'FI',name:'Finnland'},250:{a2:'FR',name:'Frankreich'},266:{a2:'GA',name:'Gabun'},
+        276:{a2:'DE',name:'Deutschland'},288:{a2:'GH',name:'Ghana'},300:{a2:'GR',name:'Griechenland'},
+        320:{a2:'GT',name:'Guatemala'},324:{a2:'GN',name:'Guinea'},340:{a2:'HN',name:'Honduras'},
+        348:{a2:'HU',name:'Ungarn'},356:{a2:'IN',name:'Indien'},360:{a2:'ID',name:'Indonesien'},
+        364:{a2:'IR',name:'Iran'},368:{a2:'IQ',name:'Irak'},372:{a2:'IE',name:'Irland'},
+        376:{a2:'IL',name:'Israel'},380:{a2:'IT',name:'Italien'},388:{a2:'JM',name:'Jamaika'},
+        392:{a2:'JP',name:'Japan'},400:{a2:'JO',name:'Jordanien'},404:{a2:'KE',name:'Kenia'},
+        408:{a2:'KP',name:'Nordkorea'},410:{a2:'KR',name:'Südkorea'},418:{a2:'LA',name:'Laos'},
+        422:{a2:'LB',name:'Libanon'},430:{a2:'LR',name:'Liberia'},434:{a2:'LY',name:'Libyen'},
+        450:{a2:'MG',name:'Madagaskar'},454:{a2:'MW',name:'Malawi'},458:{a2:'MY',name:'Malaysia'},
+        484:{a2:'MX',name:'Mexiko'},504:{a2:'MA',name:'Marokko'},508:{a2:'MZ',name:'Mosambik'},
+        516:{a2:'NA',name:'Namibia'},524:{a2:'NP',name:'Nepal'},528:{a2:'NL',name:'Niederlande'},
+        554:{a2:'NZ',name:'Neuseeland'},558:{a2:'NI',name:'Nicaragua'},562:{a2:'NE',name:'Niger'},
+        566:{a2:'NG',name:'Nigeria'},578:{a2:'NO',name:'Norwegen'},586:{a2:'PK',name:'Pakistan'},
+        591:{a2:'PA',name:'Panama'},604:{a2:'PE',name:'Peru'},608:{a2:'PH',name:'Philippinen'},
+        616:{a2:'PL',name:'Polen'},620:{a2:'PT',name:'Portugal'},634:{a2:'QA',name:'Katar'},
+        642:{a2:'RO',name:'Rumänien'},643:{a2:'RU',name:'Russland'},682:{a2:'SA',name:'Saudi-Arabien'},
+        686:{a2:'SN',name:'Senegal'},694:{a2:'SL',name:'Sierra Leone'},706:{a2:'SO',name:'Somalia'},
+        710:{a2:'ZA',name:'Südafrika'},724:{a2:'ES',name:'Spanien'},729:{a2:'SD',name:'Sudan'},
+        752:{a2:'SE',name:'Schweden'},756:{a2:'CH',name:'Schweiz'},760:{a2:'SY',name:'Syrien'},
+        764:{a2:'TH',name:'Thailand'},788:{a2:'TN',name:'Tunesien'},792:{a2:'TR',name:'Türkei'},
+        800:{a2:'UG',name:'Uganda'},804:{a2:'UA',name:'Ukraine'},784:{a2:'AE',name:'UAE'},
+        826:{a2:'GB',name:'Großbritannien'},834:{a2:'TZ',name:'Tansania'},840:{a2:'US',name:'USA'},
+        858:{a2:'UY',name:'Uruguay'},862:{a2:'VE',name:'Venezuela'},704:{a2:'VN',name:'Vietnam'},
+        887:{a2:'YE',name:'Jemen'},894:{a2:'ZM',name:'Sambia'},716:{a2:'ZW',name:'Simbabwe'},
+        646:{a2:'RW',name:'Ruanda'},174:{a2:'KM',name:'Komoren'},426:{a2:'LS',name:'Lesotho'},
+        748:{a2:'SZ',name:'Eswatini'},548:{a2:'VU',name:'Vanuatu'},242:{a2:'FJ',name:'Fidschi'},
+        90:{a2:'SB',name:'Salomonen'},598:{a2:'PG',name:'Papua-Neuguinea'}
+      };
+
+      window._numToInfo = numToInfo;
+
+      // Ocean background
+      svg.append('path')
+        .datum({type:'Sphere'})
+        .attr('d',path)
+        .attr('fill','#d4e8e4');
+
+      // Graticule
+      const graticule = d3.geoGraticule()();
+      svg.append('path').datum(graticule)
+        .attr('d',path).attr('fill','none')
+        .attr('stroke','#b8d4ce').attr('stroke-width','.3').attr('opacity','.7');
+
+      // Countries
+      svg.selectAll('.cpath')
+        .data(countries.features)
+        .enter().append('path')
+        .attr('class','cpath')
+        .attr('d',path)
+        .attr('data-id', d=>(numToInfo[+d.id]||{}).a2||'')
+        .attr('data-name', d=>(numToInfo[+d.id]||{}).name||'')
+        .style('stroke','none')
+        .style('cursor','pointer')
+        .style('transition','fill .25s')
+        .on('mouseover', function(event,d){
+          const info = numToInfo[+d.id]||{};
+          if(info.name){
+            tooltip.textContent=(visited.has(info.a2)?'✓ ':'')+info.name;
+            tooltip.style.opacity='1';
+          }
+          if(editMode){
+            d3.select(this).style('opacity','0.75');
+          } else {
+            const cur = d3.select(this).style('fill');
+            d3.select(this).style('filter','brightness(0.85)');
+          }
+        })
+        .on('mousemove', function(event){
+          tooltip.style.left=(event.clientX+14)+'px';
+          tooltip.style.top=(event.clientY-10)+'px';
+        })
+        .on('mouseout', function(){
+          tooltip.style.opacity='0';
+          d3.select(this).style('filter','none').style('opacity','1');
+        })
+        .on('click', function(event,d){
+          if(!editMode) return;
+          const info = numToInfo[+d.id]||{};
+          if(!info.a2) return;
+          if(visited.has(info.a2)) visited.delete(info.a2);
+          else visited.add(info.a2);
+          updateCounter();
+          updateMapColors();
+        });
+
+      // Borders
+      svg.append('path').datum(borders)
+        .attr('d',path).attr('fill','none')
+        .attr('stroke','#c4b898').attr('stroke-width','.5');
+
+      // Sphere outline
+      svg.append('path').datum({type:'Sphere'})
+        .attr('d',path).attr('fill','none')
+        .attr('stroke','#a89878').attr('stroke-width','1');
+
+      updateMapColors();
+    });
+}
+
+window.updateMapColors = function(){
+  const ni = window._numToInfo || {};
+  d3.selectAll('.cpath').style('fill', function(d){
+    const info = ni[+d.id]||{};
+    if(!info.a2) return '#e0d8c4';
+    if(highlight.has(info.a2)) return '#2a7c6f';
+    if(visited.has(info.a2)) return '#c47c2b';
+    return '#e0d8c4';
+  });
+};
+
+// ── EDIT MODE ──
+const btnView = document.getElementById('btn-view');
+const btnEdit = document.getElementById('btn-edit');
+const modeHint = document.getElementById('mode-hint');
+
+btnEdit.addEventListener('click',()=>{
+  editMode = !editMode;
+  if(editMode){
+    btnEdit.classList.add('active-mode');
+    btnView.classList.remove('active-mode');
+    modeHint.textContent='Klicke auf ein Land um es zu markieren / entmarkieren';
+    modeHint.style.color='var(--amber)';
+  } else {
+    btnEdit.classList.remove('active-mode');
+    btnView.classList.add('active-mode');
+    modeHint.textContent='Hover über ein Land für den Namen';
+    modeHint.style.color='';
+  }
+});
+btnView.addEventListener('click',()=>{
+  editMode=false;
+  btnView.classList.add('active-mode');
+  btnEdit.classList.remove('active-mode');
+  modeHint.textContent='Hover über ein Land für den Namen';
+  modeHint.style.color='';
+});
+
+// ── SCROLL REVEAL ──
+const revObs = new IntersectionObserver(entries=>{
+  entries.forEach(e=>{if(e.isIntersecting)e.target.classList.add('visible');});
+},{threshold:0.08});
+document.querySelectorAll('.reveal').forEach(el=>revObs.observe(el));
+
+// ── SKILL BARS ──
+const skillObs = new IntersectionObserver(entries=>{
+  entries.forEach(entry=>{
+    if(entry.isIntersecting){
+      entry.target.querySelectorAll('.skill-fill').forEach(bar=>{
+        const w = bar.dataset.w;
+        bar.style.transform = `scaleX(${w})`;
       });
-    });
-
-    // ── DROPDOWN ──
-    const btn      = document.getElementById('contactBtn');
-    const dropdown = document.getElementById('dropdown');
-    btn.addEventListener('click', e => {
-      e.stopPropagation();
-      dropdown.classList.toggle('open');
-    });
-    document.addEventListener('click', () => dropdown.classList.remove('open'));
-    dropdown.addEventListener('click', e => e.stopPropagation());
-
-    // ── SCROLL REVEAL ──
-    const observer = new IntersectionObserver(entries => {
-      entries.forEach(e => { if (e.isIntersecting) e.target.classList.add('visible'); });
-    }, { threshold: 0.1 });
-    document.querySelectorAll('.reveal').forEach(el => observer.observe(el));
-
-    // ── 3D KITCHEN (Three.js) ──
-    const canvas3d = document.getElementById('kitchen-canvas');
-    const renderer = new THREE.WebGLRenderer({ canvas: canvas3d, antialias: true, alpha: true });
-    renderer.setPixelRatio(window.devicePixelRatio);
-    renderer.setSize(canvas3d.clientWidth, canvas3d.clientHeight);
-    renderer.shadowMap.enabled = true;
-    renderer.shadowMap.type = THREE.PCFSoftShadowMap;
-    renderer.toneMapping = THREE.ACESFilmicToneMapping;
-    renderer.toneMappingExposure = 1.2;
-
-    const scene  = new THREE.Scene();
-    scene.background = new THREE.Color(0x0d0d0d);
-    scene.fog = new THREE.Fog(0x0d0d0d, 18, 30);
-
-    const camera = new THREE.PerspectiveCamera(45, canvas3d.clientWidth / canvas3d.clientHeight, 0.1, 100);
-    camera.position.set(5, 3.5, 7);
-    camera.lookAt(0, 0.5, 0);
-
-    // Lighting
-    const ambient = new THREE.AmbientLight(0xfff8f0, 0.4);
-    scene.add(ambient);
-
-    const spotlight = new THREE.SpotLight(0xfff3e0, 3.5, 20, Math.PI/5, 0.3);
-    spotlight.position.set(4, 8, 4);
-    spotlight.castShadow = true;
-    spotlight.shadow.mapSize.set(2048, 2048);
-    scene.add(spotlight);
-
-    const rimLight = new THREE.DirectionalLight(0xc9a96e, 0.8);
-    rimLight.position.set(-5, 3, -3);
-    scene.add(rimLight);
-
-    const fillLight = new THREE.PointLight(0x3a2a1a, 1.5, 10);
-    fillLight.position.set(-2, 1, 3);
-    scene.add(fillLight);
-
-    // Materials
-    const woodMat = new THREE.MeshStandardMaterial({ color: 0x2a1f14, roughness: 0.6, metalness: 0.05 });
-    const handleMat = new THREE.MeshStandardMaterial({ color: 0xc9a96e, roughness: 0.2, metalness: 0.8 });
-    const counterMat = new THREE.MeshStandardMaterial({ color: 0xd8d0c8, roughness: 0.3, metalness: 0.2 });
-    const applianceMat = new THREE.MeshStandardMaterial({ color: 0x1a1a1a, roughness: 0.15, metalness: 0.9 });
-    const floorMat = new THREE.MeshStandardMaterial({ color: 0x0f0f0f, roughness: 0.8, metalness: 0 });
-    const wallMat = new THREE.MeshStandardMaterial({ color: 0x141414, roughness: 0.9, metalness: 0 });
-
-    const group = new THREE.Group();
-    scene.add(group);
-
-    function box(w, h, d, mat, x, y, z) {
-      const mesh = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), mat);
-      mesh.position.set(x, y, z);
-      mesh.castShadow = true;
-      mesh.receiveShadow = true;
-      group.add(mesh);
-      return mesh;
     }
+  });
+},{threshold:0.2});
+document.querySelectorAll('.skill-group').forEach(g=>skillObs.observe(g));
 
-    // Floor & walls
-    const floor = new THREE.Mesh(new THREE.PlaneGeometry(14, 10), floorMat);
-    floor.rotation.x = -Math.PI/2;
-    floor.position.y = -0.01;
-    floor.receiveShadow = true;
-    scene.add(floor);
-
-    const backWall = new THREE.Mesh(new THREE.PlaneGeometry(14, 6), wallMat);
-    backWall.position.set(0, 3, -4);
-    backWall.receiveShadow = true;
-    scene.add(backWall);
-
-    const sideWall = new THREE.Mesh(new THREE.PlaneGeometry(10, 6), wallMat);
-    sideWall.rotation.y = Math.PI/2;
-    sideWall.position.set(-5, 3, 0);
-    sideWall.receiveShadow = true;
-    scene.add(sideWall);
-
-    // Base cabinets (L-shape)
-    for (let i = 0; i < 5; i++) box(1, 0.9, 0.6, woodMat, -2 + i, 0.45, -3.5);
-    for (let i = 0; i < 3; i++) box(1, 0.9, 0.6, woodMat, -4.5, 0.45, -2 + i);
-
-    // Countertops
-    box(5.2, 0.06, 0.68, counterMat, -2, 0.93, -3.5);
-    box(0.68, 0.06, 3.2, counterMat, -4.5, 0.93, -1.5);
-
-    // Upper cabinets
-    for (let i = 0; i < 4; i++) box(1, 0.75, 0.38, woodMat, -2 + i, 2.2, -3.72);
-    for (let i = 0; i < 2; i++) box(1, 0.75, 0.38, woodMat, -4.72, 2.2, -2 + i);
-
-    // Cabinet handles
-    for (let i = 0; i < 5; i++) {
-      box(0.01, 0.12, 0.01, handleMat, -2 + i, 0.45, -3.21);
-      box(0.01, 0.12, 0.01, handleMat, -2 + i + 0.15, 0.45, -3.21);
-    }
-    for (let i = 0; i < 4; i++) box(0.28, 0.01, 0.01, handleMat, -2 + i, 2.2, -3.54);
-
-    // Sink
-    const sinkBase = new THREE.Mesh(new THREE.BoxGeometry(0.78, 0.12, 0.4), applianceMat);
-    sinkBase.position.set(0, 0.93, -3.5);
-    sinkBase.castShadow = true;
-    scene.add(sinkBase);
-    const faucet = new THREE.Mesh(new THREE.CylinderGeometry(0.015, 0.015, 0.28, 8), handleMat);
-    faucet.position.set(0, 1.2, -3.5);
-    faucet.castShadow = true;
-    scene.add(faucet);
-
-    // Oven/appliance
-    box(0.9, 0.88, 0.58, applianceMat, 1.5, 0.45, -3.5);
-
-    // Island
-    box(2, 0.9, 1, woodMat, 0.5, 0.45, 0.5);
-    box(2.1, 0.05, 1.1, counterMat, 0.5, 0.92, 0.5);
-
-    // Bar stools (simplified)
-    for (let i = 0; i < 2; i++) {
-      const stool = new THREE.Group();
-      const seat = new THREE.Mesh(new THREE.CylinderGeometry(0.2, 0.18, 0.05, 12), woodMat);
-      seat.position.y = 0.75;
-      stool.add(seat);
-      const leg = new THREE.Mesh(new THREE.CylinderGeometry(0.02, 0.02, 0.75, 8), handleMat);
-      leg.position.y = 0.375;
-      stool.add(leg);
-      stool.position.set(-0.4 + i * 0.85, 0, 1.8);
-      group.add(stool);
-    }
-
-    // Overhead lamp
-    const lampBase = new THREE.Mesh(new THREE.CylinderGeometry(0.3, 0.18, 0.12, 16), applianceMat);
-    lampBase.position.set(0.5, 2.6, 0.5);
-    group.add(lampBase);
-    const lampGlow = new THREE.PointLight(0xfff3c0, 1.5, 3);
-    lampGlow.position.set(0.5, 2.45, 0.5);
-    scene.add(lampGlow);
-
-    // Mouse orbit
-    let isDragging = false, prevX = 0, rotY = 0.3, rotX = 0.1;
-
-    canvas3d.addEventListener('mousedown', e => { isDragging = true; prevX = e.clientX; });
-    window.addEventListener('mouseup', () => isDragging = false);
-    window.addEventListener('mousemove', e => {
-      if (!isDragging) return;
-      rotY += (e.clientX - prevX) * 0.008;
-      prevX = e.clientX;
-    });
-
-    // Touch
-    canvas3d.addEventListener('touchstart', e => { isDragging = true; prevX = e.touches[0].clientX; });
-    window.addEventListener('touchend', () => isDragging = false);
-    window.addEventListener('touchmove', e => {
-      if (!isDragging) return;
-      rotY += (e.touches[0].clientX - prevX) * 0.008;
-      prevX = e.touches[0].clientX;
-    });
-
-    // Auto-rotate
-    let autoRot = true;
-    canvas3d.addEventListener('mousedown', () => autoRot = false);
-    canvas3d.addEventListener('touchstart', () => autoRot = false);
-
-    function animate() {
-      requestAnimationFrame(animate);
-      if (autoRot) rotY += 0.003;
-      group.rotation.y = rotY;
-      group.rotation.x = Math.max(-0.3, Math.min(0.3, rotX));
-      renderer.render(scene, camera);
-    }
-    animate();
-
-    window.addEventListener('resize', () => {
-      const w = canvas3d.clientWidth;
-      const h = canvas3d.clientHeight;
-      camera.aspect = w / h;
-      camera.updateProjectionMatrix();
-      renderer.setSize(w, h);
-    });
-  </script>
+updateCounter();
+</script>
 </body>
 </html>
+

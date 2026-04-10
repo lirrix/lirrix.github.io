@@ -1,1010 +1,254 @@
 <!DOCTYPE html>
 <html lang="de">
 <head>
-<meta charset="UTF-8"/>
-<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-<title>Luis Genenger — Digital Nomad</title>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.8.5/d3.min.js"></script>
-<style>
-@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;0,900;1,400;1,700&family=DM+Sans:wght@300;400;500&display=swap');
-
-:root {
-  --bg:        #f5f0e8;
-  --bg2:       #ede7d9;
-  --surface:   #e8e0cf;
-  --border:    #d4c9b0;
-  --border2:   #c4b898;
-  --ink:       #1c1812;
-  --ink2:      #3d3628;
-  --muted:     #8a7d65;
-  --amber:     #c47c2b;
-  --amber-dim: rgba(196,124,43,0.15);
-  --teal:      #2a7c6f;
-  --teal-dim:  rgba(42,124,111,0.15);
-  --red:       #c0392b;
-  --paper:     #faf7f0;
-}
-
-*,*::before,*::after{margin:0;padding:0;box-sizing:border-box;}
-html{scroll-behavior:smooth;}
-body{
-  background:var(--bg);
-  color:var(--ink2);
-  font-family:'DM Sans',sans-serif;
-  font-weight:300;
-  overflow-x:hidden;
-  cursor:none;
-}
-
-/* ── CURSOR ── */
-#cur{position:fixed;width:8px;height:8px;background:var(--amber);border-radius:50%;pointer-events:none;z-index:9999;transform:translate(-50%,-50%);transition:width .25s,height .25s,opacity .25s;}
-#cur-r{position:fixed;width:30px;height:30px;border:1.5px solid rgba(196,124,43,.4);border-radius:50%;pointer-events:none;z-index:9998;transform:translate(-50%,-50%);}
-
-/* ── TEXTURE OVERLAY ── */
-body::before{
-  content:'';position:fixed;inset:0;
-  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='400' height='400'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='400' height='400' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E");
-  pointer-events:none;z-index:998;
-}
-
-/* ── NAV ── */
-nav{
-  position:fixed;top:0;left:0;right:0;z-index:500;
-  padding:20px 48px;
-  display:flex;align-items:center;justify-content:space-between;
-  background:rgba(245,240,232,.92);
-  backdrop-filter:blur(16px);
-  border-bottom:1px solid var(--border);
-}
-.nav-logo{
-  font-family:'Playfair Display',serif;
-  font-size:18px;font-weight:700;
-  color:var(--ink);letter-spacing:.5px;
-}
-.nav-logo span{color:var(--amber);}
-
-.nav-right{display:flex;gap:8px;align-items:center;}
-.nav-pill{
-  background:transparent;border:1.5px solid var(--border2);
-  color:var(--muted);font-family:'DM Sans',sans-serif;
-  font-size:11px;letter-spacing:2px;text-transform:uppercase;
-  padding:8px 18px;cursor:none;transition:all .3s;
-}
-.nav-pill:hover,.nav-pill.active{
-  border-color:var(--amber);color:var(--amber);background:var(--amber-dim);
-}
-
-/* ── NAV PANELS ── */
-.nav-panel{
-  position:fixed;top:70px;right:48px;z-index:490;
-  width:380px;background:var(--paper);
-  border:1.5px solid var(--border2);
-  padding:32px;
-  opacity:0;pointer-events:none;
-  transform:translateY(-8px);
-  transition:opacity .3s,transform .3s;
-  box-shadow:0 20px 60px rgba(28,24,18,.12);
-}
-.nav-panel.open{opacity:1;pointer-events:all;transform:translateY(0);}
-.panel-title{
-  font-family:'Playfair Display',serif;font-size:20px;font-weight:700;
-  color:var(--ink);margin-bottom:24px;
-}
-
-.f-group{margin-bottom:16px;}
-.f-group label{display:block;font-size:10px;letter-spacing:2px;text-transform:uppercase;color:var(--muted);margin-bottom:6px;}
-.f-group input,.f-group textarea,.f-group select{
-  width:100%;background:var(--bg);border:1.5px solid var(--border);
-  color:var(--ink);font-family:'DM Sans',sans-serif;font-size:13px;
-  padding:10px 14px;outline:none;transition:border-color .3s;resize:none;
-}
-.f-group input:focus,.f-group textarea:focus{border-color:var(--amber);}
-.f-group textarea{height:80px;}
-.f-submit{
-  width:100%;background:var(--amber);color:#fff;border:none;
-  font-family:'DM Sans',sans-serif;font-size:11px;font-weight:500;
-  letter-spacing:3px;text-transform:uppercase;padding:14px;
-  cursor:none;transition:background .3s,transform .2s;
-}
-.f-submit:hover{background:#b36d20;transform:translateY(-1px);}
-
-.cert-list{display:flex;flex-direction:column;gap:10px;}
-.cert-item{
-  display:flex;align-items:center;gap:14px;
-  padding:12px 14px;border:1.5px solid var(--border);
-  background:var(--bg);transition:border-color .3s;
-}
-.cert-item:hover{border-color:var(--amber);}
-.cert-icon{width:34px;height:34px;background:var(--amber-dim);border:1.5px solid rgba(196,124,43,.3);display:flex;align-items:center;justify-content:center;font-size:15px;flex-shrink:0;}
-.cert-name{font-size:12px;color:var(--ink);font-weight:400;}
-.cert-org{font-size:10px;color:var(--muted);margin-top:2px;letter-spacing:.5px;}
-.cert-badge{margin-left:auto;font-size:9px;letter-spacing:2px;text-transform:uppercase;color:var(--amber);border:1px solid rgba(196,124,43,.4);padding:3px 8px;white-space:nowrap;}
-
-/* ── HERO ── */
-.hero{
-  min-height:100vh;
-  display:grid;grid-template-columns:1fr 1fr;
-  align-items:center;
-  padding:100px 48px 60px;
-  position:relative;overflow:hidden;
-  gap:60px;
-}
-.hero-left{}
-.hero-stamp{
-  display:inline-block;
-  border:2px solid var(--amber);
-  color:var(--amber);
-  font-size:9px;letter-spacing:4px;text-transform:uppercase;
-  padding:6px 14px;margin-bottom:28px;
-  opacity:0;animation:fadeUp .9s .1s forwards;
-}
-.hero-title{
-  font-family:'Playfair Display',serif;
-  font-size:clamp(48px,7vw,96px);
-  font-weight:900;color:var(--ink);
-  line-height:.95;letter-spacing:-2px;
-  opacity:0;animation:fadeUp .9s .3s forwards;
-}
-.hero-title em{font-style:italic;color:var(--amber);}
-.hero-title .outline{
-  -webkit-text-stroke:1.5px var(--ink);color:transparent;
-}
-.hero-role{
-  margin-top:24px;
-  font-size:13px;color:var(--muted);letter-spacing:2px;text-transform:uppercase;
-  opacity:0;animation:fadeUp .9s .5s forwards;
-}
-.hero-desc{
-  margin-top:20px;font-size:15px;line-height:1.85;color:var(--ink2);
-  max-width:420px;
-  opacity:0;animation:fadeUp .9s .6s forwards;
-}
-.hero-cta{
-  margin-top:36px;display:flex;align-items:center;gap:20px;
-  opacity:0;animation:fadeUp .9s .8s forwards;
-}
-.btn-main{
-  background:var(--ink);color:var(--bg);
-  text-decoration:none;font-size:11px;letter-spacing:3px;
-  text-transform:uppercase;padding:14px 30px;font-weight:500;
-  transition:background .3s,transform .2s;display:inline-block;
-}
-.btn-main:hover{background:var(--ink2);transform:translateY(-2px);}
-.btn-sec{
-  color:var(--muted);text-decoration:none;font-size:11px;
-  letter-spacing:2px;text-transform:uppercase;
-  display:flex;align-items:center;gap:10px;transition:color .3s;
-}
-.btn-sec:hover{color:var(--amber);}
-.btn-sec::after{content:'';display:block;width:32px;height:1.5px;background:currentColor;transition:width .3s;}
-.btn-sec:hover::after{width:50px;}
-
-/* Hero right — explorer card */
-.hero-right{
-  opacity:0;animation:fadeUp .9s .4s forwards;
-}
-.explorer-card{
-  background:var(--paper);
-  border:1.5px solid var(--border2);
-  padding:36px;
-  position:relative;
-  box-shadow:8px 8px 0 var(--border);
-}
-.explorer-card::before{
-  content:'EXPLORER';
-  position:absolute;top:-1px;right:24px;
-  background:var(--amber);color:#fff;
-  font-size:8px;letter-spacing:4px;padding:4px 12px;font-weight:500;
-}
-.ec-stat{padding:18px 0;border-bottom:1px solid var(--border);}
-.ec-stat:last-child{border-bottom:none;padding-bottom:0;}
-.ec-num{
-  font-family:'Playfair Display',serif;
-  font-size:42px;font-weight:900;color:var(--ink);line-height:1;
-}
-.ec-num span{color:var(--amber);font-size:24px;}
-.ec-label{font-size:10px;letter-spacing:3px;text-transform:uppercase;color:var(--muted);margin-top:4px;}
-.ec-tags{display:flex;flex-wrap:wrap;gap:8px;margin-top:20px;}
-.ec-tag{
-  font-size:10px;letter-spacing:1px;
-  padding:5px 12px;border:1.5px solid var(--border2);color:var(--muted);
-  transition:all .3s;
-}
-.ec-tag:hover{border-color:var(--amber);color:var(--amber);}
-.ec-tag.hi{border-color:var(--teal);color:var(--teal);}
-
-@keyframes fadeUp{from{opacity:0;transform:translateY(20px);}to{opacity:1;transform:translateY(0);}}
-
-/* ── DIVIDER ── */
-.divider{
-  height:1px;background:linear-gradient(90deg,transparent,var(--border2),transparent);
-  margin:0 48px;
-}
-
-/* ── MAP SECTION ── */
-.map-section{padding:90px 48px;}
-.sec-eyebrow{font-size:10px;letter-spacing:5px;text-transform:uppercase;color:var(--amber);margin-bottom:12px;}
-.sec-title{
-  font-family:'Playfair Display',serif;
-  font-size:clamp(32px,5vw,56px);font-weight:900;
-  color:var(--ink);line-height:1;letter-spacing:-1px;margin-bottom:6px;
-}
-.sec-sub{font-size:13px;color:var(--muted);letter-spacing:1px;margin-bottom:48px;}
-
-.map-counter{
-  display:flex;align-items:baseline;gap:12px;margin-bottom:32px;
-}
-.map-count-num{
-  font-family:'Playfair Display',serif;
-  font-size:clamp(56px,9vw,110px);font-weight:900;
-  color:var(--amber);line-height:1;
-}
-.map-count-total{
-  font-family:'Playfair Display',serif;
-  font-size:clamp(32px,5vw,64px);font-weight:400;
-  color:var(--border2);line-height:1;
-}
-.map-count-label{font-size:12px;letter-spacing:3px;text-transform:uppercase;color:var(--muted);margin-left:4px;}
-
-/* MAP CONTAINER */
-.map-container{
-  width:100%;background:var(--paper);
-  border:1.5px solid var(--border2);
-  position:relative;overflow:hidden;
-  box-shadow:0 4px 32px rgba(28,24,18,.08);
-}
-#world-map{width:100%;display:block;cursor:crosshair;}
-
-/* Map country styles via JS/D3 */
-.map-legend{
-  display:flex;align-items:center;gap:28px;margin-top:18px;
-  font-size:11px;letter-spacing:2px;text-transform:uppercase;color:var(--muted);
-}
-.leg-swatch{width:14px;height:14px;border-radius:2px;}
-
-/* MAP TOOLTIP */
-#map-tooltip{
-  position:fixed;
-  background:var(--ink);color:var(--bg);
-  font-family:'DM Sans',sans-serif;font-size:11px;
-  letter-spacing:2px;text-transform:uppercase;
-  padding:7px 14px;pointer-events:none;z-index:800;
-  opacity:0;transition:opacity .2s;
-  white-space:nowrap;
-}
-
-.map-controls{
-  display:flex;align-items:center;gap:12px;margin-top:20px;flex-wrap:wrap;
-}
-.map-btn{
-  background:transparent;border:1.5px solid var(--border2);
-  color:var(--muted);font-family:'DM Sans',sans-serif;
-  font-size:11px;letter-spacing:2px;text-transform:uppercase;
-  padding:9px 20px;cursor:none;transition:all .3s;
-  display:inline-flex;align-items:center;gap:8px;
-}
-.map-btn:hover,.map-btn.active-mode{border-color:var(--amber);color:var(--amber);background:var(--amber-dim);}
-.mode-hint{font-size:11px;color:var(--muted);letter-spacing:1px;padding:9px 0;}
-
-/* ── PROJECTS ── */
-.projects-section{
-  padding:90px 48px;
-  background:var(--bg2);
-  border-top:1px solid var(--border);border-bottom:1px solid var(--border);
-}
-.projects-grid{
-  display:grid;grid-template-columns:repeat(auto-fit,minmax(320px,1fr));
-  gap:24px;margin-top:56px;
-}
-.project-card{
-  background:var(--paper);border:1.5px solid var(--border);
-  padding:36px;position:relative;overflow:hidden;
-  transition:box-shadow .4s,transform .4s,border-color .4s;cursor:none;
-}
-.project-card:hover{
-  box-shadow:6px 6px 0 var(--border2);
-  transform:translate(-2px,-2px);
-  border-color:var(--border2);
-}
-.project-card.featured{
-  grid-column:1/-1;
-  display:grid;grid-template-columns:1fr 1fr;gap:48px;align-items:center;
-  background:var(--ink);border-color:var(--ink);
-}
-.project-card.featured .project-num{color:rgba(255,255,255,.2);}
-.project-card.featured .project-title{color:#fff;}
-.project-card.featured .project-desc{color:rgba(255,255,255,.6);}
-.project-card.featured .p-tag{border-color:rgba(255,255,255,.2);color:rgba(255,255,255,.5);}
-.project-card.featured .project-link{color:var(--amber);}
-.project-num{
-  font-family:'Playfair Display',serif;font-size:11px;font-weight:400;
-  letter-spacing:4px;color:var(--border2);margin-bottom:18px;font-style:italic;
-}
-.project-title{
-  font-family:'Playfair Display',serif;font-size:22px;font-weight:700;
-  color:var(--ink);margin-bottom:10px;line-height:1.2;
-}
-.project-desc{font-size:13px;color:var(--muted);line-height:1.85;margin-bottom:20px;}
-.project-tags{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:20px;}
-.p-tag{font-size:9px;letter-spacing:2px;text-transform:uppercase;padding:4px 10px;border:1px solid var(--border);color:var(--muted);}
-.project-link{font-size:10px;letter-spacing:3px;text-transform:uppercase;color:var(--amber);text-decoration:none;display:inline-flex;align-items:center;gap:8px;transition:gap .3s;}
-.project-link:hover{gap:14px;}
-.project-link::after{content:'→';}
-.feat-img{
-  aspect-ratio:4/3;background:linear-gradient(135deg,#2a2018,#1c1510);
-  display:flex;align-items:center;justify-content:center;font-size:56px;
-  border:1px solid rgba(255,255,255,.08);
-}
-
-/* ── SKILLS ── */
-.skills-section{padding:90px 48px;}
-.skills-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:40px;margin-top:56px;}
-.skill-group-title{
-  font-family:'Playfair Display',serif;font-size:16px;font-weight:700;font-style:italic;
-  color:var(--ink);margin-bottom:24px;padding-bottom:12px;
-  border-bottom:1.5px solid var(--border);
-}
-.skill-row{margin-bottom:18px;}
-.skill-top{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;}
-.skill-name{font-size:13px;color:var(--ink2);}
-.skill-pct{font-size:10px;color:var(--muted);letter-spacing:1px;}
-.skill-bar{height:3px;background:var(--border);position:relative;overflow:hidden;border-radius:2px;}
-.skill-fill{
-  height:100%;
-  background:linear-gradient(90deg,var(--amber),var(--teal));
-  transform:scaleX(0);transform-origin:left;
-  transition:transform 1.3s cubic-bezier(.16,1,.3,1);
-}
-
-/* ── TRAVEL SECTION ── */
-.travel-section{
-  padding:90px 48px;
-  background:var(--bg2);
-  border-top:1px solid var(--border);
-}
-.travel-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:20px;margin-top:56px;}
-.travel-card{
-  background:var(--paper);border:1.5px solid var(--border);
-  overflow:hidden;transition:border-color .3s,transform .3s;cursor:none;
-}
-.travel-card:hover{border-color:var(--amber);transform:translateY(-4px);}
-.travel-card-img{
-  aspect-ratio:16/9;display:flex;align-items:center;justify-content:center;
-  font-size:56px;position:relative;
-}
-.ti1{background:linear-gradient(135deg,#e8d5a3,#c9a86c);}
-.ti2{background:linear-gradient(135deg,#a3c8c4,#6ca8a3);}
-.ti3{background:linear-gradient(135deg,#c4a3c8,#a36ca8);}
-.ti4{background:linear-gradient(135deg,#c8c4a3,#a8a36c);}
-.travel-body{padding:20px;}
-.travel-loc{font-size:9px;letter-spacing:3px;text-transform:uppercase;color:var(--amber);margin-bottom:6px;}
-.travel-title{font-family:'Playfair Display',serif;font-size:17px;font-weight:700;color:var(--ink);line-height:1.3;margin-bottom:6px;}
-.travel-desc{font-size:12px;color:var(--muted);line-height:1.8;}
-.travel-meta{display:flex;justify-content:space-between;padding:14px 20px;border-top:1px solid var(--border);font-size:10px;letter-spacing:1px;color:var(--muted);}
-
-/* ── FOOTER ── */
-footer{
-  padding:52px 48px;border-top:1.5px solid var(--border);
-  display:flex;align-items:center;justify-content:space-between;
-  background:var(--ink);
-}
-.footer-logo{font-family:'Playfair Display',serif;font-size:18px;font-weight:700;color:#fff;}
-.footer-logo span{color:var(--amber);}
-.footer-copy{font-size:11px;color:rgba(255,255,255,.3);letter-spacing:1px;}
-.footer-links{display:flex;gap:20px;}
-.footer-links a{font-size:11px;letter-spacing:2px;text-transform:uppercase;color:rgba(255,255,255,.4);text-decoration:none;transition:color .3s;}
-.footer-links a:hover{color:var(--amber);}
-
-/* REVEAL */
-.reveal{opacity:0;transform:translateY(24px);transition:opacity .85s,transform .85s;}
-.reveal.visible{opacity:1;transform:translateY(0);}
-
-@media(max-width:900px){
-  .hero{grid-template-columns:1fr;padding:100px 24px 60px;gap:40px;}
-  .hero-right{display:none;}
-  nav{padding:18px 24px;}
-  .map-section,.projects-section,.skills-section,.travel-section{padding:70px 24px;}
-  .project-card.featured{grid-column:auto;display:block;}
-  .feat-img{margin-top:24px;}
-  footer{flex-direction:column;gap:20px;padding:40px 24px;text-align:center;}
-  .nav-panel{right:0;width:calc(100vw - 32px);}
-  .divider{margin:0 24px;}
-}
-</style>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Hardware Heroes</title>
+  <link rel="stylesheet" href="style.css" />
+  <link href="https://fonts.googleapis.com/css2?family=Bangers&family=Comic+Neue:wght@400;700&display=swap" rel="stylesheet" />
 </head>
 <body>
 
-<div id="cur"></div>
-<div id="cur-r"></div>
-<div id="map-tooltip"></div>
+<!-- ==================== MAIN MENU ==================== -->
+<div id="screen-menu" class="screen active">
+  <div class="stars"></div>
+  <div class="menu-bg-grid"></div>
 
-<!-- ── NAV ── -->
-<nav>
-  <div class="nav-logo">Luis <span>Genenger</span></div>
-  <div class="nav-right">
-    <button class="nav-pill" data-panel="contact">Kontakt</button>
-    <button class="nav-pill" data-panel="certs">Zertifikate</button>
-  </div>
-</nav>
+  <div class="menu-center">
+    <div class="logo-wrap">
+      <div class="logo-burst"></div>
+      <div class="logo-text">
+        <span class="logo-hw">HARDWARE</span>
+        <span class="logo-heroes">HEROES</span>
+      </div>
+      <div class="logo-sub">Baue deinen ersten PC! 🖥️</div>
+    </div>
 
-<!-- CONTACT PANEL -->
-<div class="nav-panel" id="panel-contact">
-  <div class="panel-title">Schreib mir</div>
-  <div class="f-group"><label>Name</label><input type="text" placeholder="Dein Name"/></div>
-  <div class="f-group"><label>E-Mail</label><input type="email" placeholder="deine@email.de"/></div>
-  <div class="f-group"><label>Betreff</label>
-    <select><option>Projekt-Anfrage</option><option>Zusammenarbeit</option><option>Reise-Austausch</option><option>Sonstiges</option></select>
+    <div class="menu-character">
+      <svg viewBox="0 0 120 180" width="120" height="180">
+        <!-- Body -->
+        <rect x="30" y="70" width="60" height="70" rx="8" fill="#4FC3F7" stroke="#01579B" stroke-width="3"/>
+        <!-- Head -->
+        <circle cx="60" cy="45" r="30" fill="#FFD54F" stroke="#F57F17" stroke-width="3"/>
+        <!-- Eyes -->
+        <circle cx="50" cy="40" r="6" fill="white"/>
+        <circle cx="70" cy="40" r="6" fill="white"/>
+        <circle cx="52" cy="41" r="3" fill="#1A1A2E"/>
+        <circle cx="72" cy="41" r="3" fill="#1A1A2E"/>
+        <!-- Smile -->
+        <path d="M48 55 Q60 65 72 55" stroke="#F57F17" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+        <!-- Arms -->
+        <rect x="0" y="75" width="30" height="14" rx="7" fill="#4FC3F7" stroke="#01579B" stroke-width="2"/>
+        <rect x="90" y="75" width="30" height="14" rx="7" fill="#4FC3F7" stroke="#01579B" stroke-width="2"/>
+        <!-- Wrench -->
+        <line x1="105" y1="82" x2="118" y2="68" stroke="#9E9E9E" stroke-width="4" stroke-linecap="round"/>
+        <circle cx="119" cy="67" r="6" fill="#9E9E9E" stroke="#616161" stroke-width="2"/>
+        <!-- CPU on chest -->
+        <rect x="42" y="85" width="36" height="36" rx="4" fill="#263238" stroke="#00BCD4" stroke-width="2"/>
+        <text x="60" y="108" text-anchor="middle" font-size="10" fill="#00BCD4" font-family="monospace">CPU</text>
+        <!-- Legs -->
+        <rect x="36" y="138" width="18" height="28" rx="5" fill="#1565C0" stroke="#0D47A1" stroke-width="2"/>
+        <rect x="66" y="138" width="18" height="28" rx="5" fill="#1565C0" stroke="#0D47A1" stroke-width="2"/>
+        <!-- Shoes -->
+        <rect x="30" y="160" width="26" height="12" rx="6" fill="#212121"/>
+        <rect x="60" y="160" width="26" height="12" rx="6" fill="#212121"/>
+      </svg>
+    </div>
+
+    <nav class="main-nav">
+      <button class="btn-menu" onclick="showLevelSelect()">
+        <span class="btn-icon">▶</span> SPIELEN
+      </button>
+      <button class="btn-menu btn-secondary" onclick="showTutorial()">
+        <span class="btn-icon">📖</span> ANLEITUNG
+      </button>
+      <button class="btn-menu btn-secondary" onclick="showCredits()">
+        <span class="btn-icon">⭐</span> CREDITS
+      </button>
+    </nav>
+
+    <div class="sound-toggle-wrap">
+      <button class="sound-btn" id="soundBtn" onclick="toggleSound()">🔊 Sound AN</button>
+    </div>
   </div>
-  <div class="f-group"><label>Nachricht</label><textarea placeholder="Was hast du vor?"></textarea></div>
-  <button class="f-submit">Senden →</button>
 </div>
 
-<!-- CERTS PANEL -->
-<div class="nav-panel" id="panel-certs">
-  <div class="panel-title">Zertifikate</div>
-  <div class="cert-list">
-    <div class="cert-item"><div class="cert-icon">🎓</div><div><div class="cert-name">B.Sc. Wirtschaftsinformatik</div><div class="cert-org">Möfa Köln · Sep 2025</div></div><div class="cert-badge">Bald fertig</div></div>
-    <div class="cert-item"><div class="cert-icon">☁️</div><div><div class="cert-name">AWS Cloud Practitioner</div><div class="cert-org">Amazon Web Services</div></div><div class="cert-badge">Certified</div></div>
-    <div class="cert-item"><div class="cert-icon">📊</div><div><div class="cert-name">Google Data Analytics</div><div class="cert-org">Google / Coursera</div></div><div class="cert-badge">Certified</div></div>
-    <div class="cert-item"><div class="cert-icon">⚡</div><div><div class="cert-name">Scrum Foundation</div><div class="cert-org">CertiProf</div></div><div class="cert-badge">Certified</div></div>
+<!-- ==================== LEVEL SELECT ==================== -->
+<div id="screen-levelselect" class="screen">
+  <div class="screen-header">
+    <button class="back-btn" onclick="showMenu()">← Menü</button>
+    <h1 class="screen-title">LEVEL AUSWAHL</h1>
+  </div>
+
+  <div class="levels-grid">
+    <!-- Level 1 -->
+    <div class="level-card unlocked" onclick="startLevel(1)">
+      <div class="level-badge">1</div>
+      <div class="level-card-inner">
+        <div class="level-icon">🔩</div>
+        <h2>Die Grundlagen</h2>
+        <p>Lerne die wichtigsten PC-Bauteile kennen und ordne sie richtig zu.</p>
+        <div class="level-stars">
+          <span id="l1s1" class="star">★</span>
+          <span id="l1s2" class="star">★</span>
+          <span id="l1s3" class="star">★</span>
+        </div>
+        <div class="level-diff">
+          <span class="diff-dot active"></span>
+          <span class="diff-dot"></span>
+          <span class="diff-dot"></span>
+        </div>
+        <span class="diff-label">Einfach</span>
+      </div>
+    </div>
+
+    <!-- Level 2 -->
+    <div class="level-card unlocked" onclick="startLevel(2)">
+      <div class="level-badge">2</div>
+      <div class="level-card-inner">
+        <div class="level-icon">⚡</div>
+        <h2>Komponentenwissen</h2>
+        <p>Teste dein Wissen über Funktionen und Spezifikationen der Teile.</p>
+        <div class="level-stars">
+          <span id="l2s1" class="star">★</span>
+          <span id="l2s2" class="star">★</span>
+          <span id="l2s3" class="star">★</span>
+        </div>
+        <div class="level-diff">
+          <span class="diff-dot active"></span>
+          <span class="diff-dot active"></span>
+          <span class="diff-dot"></span>
+        </div>
+        <span class="diff-label">Mittel</span>
+      </div>
+    </div>
+
+    <!-- Level 3 -->
+    <div class="level-card unlocked" onclick="startLevel(3)">
+      <div class="level-badge">3</div>
+      <div class="level-card-inner">
+        <div class="level-icon">🏆</div>
+        <h2>PC zusammenbauen</h2>
+        <p>Baue einen vollständigen PC in der richtigen Reihenfolge zusammen!</p>
+        <div class="level-stars">
+          <span id="l3s1" class="star">★</span>
+          <span id="l3s2" class="star">★</span>
+          <span id="l3s3" class="star">★</span>
+        </div>
+        <div class="level-diff">
+          <span class="diff-dot active"></span>
+          <span class="diff-dot active"></span>
+          <span class="diff-dot active"></span>
+        </div>
+        <span class="diff-label">Schwer</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="tip-box">
+    💡 <strong>Tipp:</strong> Spiele die Level der Reihe nach für das beste Lernerlebnis!
   </div>
 </div>
 
-<!-- ── HERO ── -->
-<section class="hero">
-  <div class="hero-left">
-    <div class="hero-stamp">Wirtschaftsinformatiker · Digital Nomad</div>
-    <h1 class="hero-title">
-      Luis<br>
-      <span class="outline">Gen</span><em>enger</em><span style="color:var(--amber)">.</span>
-    </h1>
-    <p class="hero-role">WI Bachelor · Köln · Remote-First</p>
-    <p class="hero-desc">
-      Ich baue digitale Produkte, analysiere Daten — und erkunde nebenbei die Welt.
-      Fertig im September 2025. Ziel: ortsunabhängig leben und arbeiten.
-    </p>
-    <div class="hero-cta">
-      <a href="#map-sec" class="btn-main">Meine Reisen</a>
-      <a href="#projects" class="btn-sec">Projekte</a>
+<!-- ==================== GAME SCREEN ==================== -->
+<div id="screen-game" class="screen">
+  <div class="game-hud">
+    <button class="back-btn" onclick="showLevelSelect()">← Verlassen</button>
+    <div class="hud-center">
+      <span class="hud-level" id="hudLevel">Level 1</span>
+      <div class="hud-progress-bar"><div id="hudProgress" class="hud-progress-fill"></div></div>
     </div>
-  </div>
-  <div class="hero-right">
-    <div class="explorer-card">
-      <div class="ec-stat">
-        <div class="ec-num" id="hero-country-count">13<span>+</span></div>
-        <div class="ec-label">Länder bereist</div>
-      </div>
-      <div class="ec-stat">
-        <div class="ec-num">4<span>yr</span></div>
-        <div class="ec-label">Reiseerfahrung</div>
-      </div>
-      <div class="ec-stat">
-        <div class="ec-num">Sep<span>'25</span></div>
-        <div class="ec-label">Bachelor Abschluss</div>
-      </div>
-      <div class="ec-tags">
-        <span class="ec-tag">React</span>
-        <span class="ec-tag">Python</span>
-        <span class="ec-tag">SQL</span>
-        <span class="ec-tag">Azure</span>
-        <span class="ec-tag hi">✈ Remote</span>
-        <span class="ec-tag hi">🌍 Nomad</span>
-      </div>
-    </div>
-  </div>
-</section>
-
-<div class="divider"></div>
-
-<!-- ── MAP SECTION ── -->
-<section class="map-section" id="map-sec">
-  <div class="reveal">
-    <div class="sec-eyebrow">Meine Welt</div>
-    <h2 class="sec-title">Bisher erkundet</h2>
-    <div class="map-counter">
-      <div class="map-count-num" id="visitedNum">13</div>
-      <div class="map-count-total">/195</div>
-      <div class="map-count-label">Länder</div>
+    <div class="hud-score">
+      <span>⭐ <span id="hudScore">0</span></span>
     </div>
   </div>
 
-  <div class="map-container reveal">
-    <svg id="world-map"></svg>
-  </div>
+  <div id="gameContent" class="game-content"></div>
+</div>
 
-  <div class="map-controls reveal">
-    <button class="map-btn active-mode" id="btn-view">🗺 Ansehen</button>
-    <button class="map-btn" id="btn-edit">✏️ Länder bearbeiten</button>
-    <span class="mode-hint" id="mode-hint">Hover über ein Land für den Namen</span>
+<!-- ==================== TUTORIAL ==================== -->
+<div id="screen-tutorial" class="screen">
+  <div class="screen-header">
+    <button class="back-btn" onclick="showMenu()">← Menü</button>
+    <h1 class="screen-title">ANLEITUNG</h1>
   </div>
-
-  <div class="map-legend reveal">
-    <div style="display:flex;align-items:center;gap:8px;"><div class="leg-swatch" style="background:var(--amber);opacity:.7;"></div> Besucht</div>
-    <div style="display:flex;align-items:center;gap:8px;"><div class="leg-swatch" style="background:var(--teal);"></div> Highlight / Aktuell</div>
-    <div style="display:flex;align-items:center;gap:8px;"><div class="leg-swatch" style="background:var(--border);"></div> Noch auf der Liste</div>
-  </div>
-</section>
-
-<div class="divider"></div>
-
-<!-- ── PROJECTS ── -->
-<section class="projects-section" id="projects">
-  <div class="reveal">
-    <div class="sec-eyebrow">Portfolio</div>
-    <h2 class="sec-title">Was ich gebaut habe</h2>
-  </div>
-  <div class="projects-grid">
-    <div class="project-card featured reveal">
+  <div class="tutorial-content">
+    <div class="tut-step">
+      <div class="tut-icon">1️⃣</div>
       <div>
-        <div class="project-num">Featured — I.</div>
-        <h3 class="project-title">Enterprise Software Distribution</h3>
-        <p class="project-desc">Analyse & Konzeption zur Bereitstellung von Enterprise-Software via Microsoft Store und Azure Marketplace. Bachelorarbeit mit Design Science Research Methodik.</p>
-        <div class="project-tags"><span class="p-tag">Research</span><span class="p-tag">Azure</span><span class="p-tag">Microsoft Store</span><span class="p-tag">DSR</span></div>
-        <a href="#" class="project-link">Mehr erfahren</a>
+        <h3>Level auswählen</h3>
+        <p>Wähle ein Level aus dem Menü. Fange mit Level 1 an!</p>
       </div>
-      <div class="feat-img">📊</div>
     </div>
-    <div class="project-card reveal">
-      <div class="project-num">II.</div>
-      <h3 class="project-title">Travel Analytics Dashboard</h3>
-      <p class="project-desc">Dashboard zur Visualisierung meiner Reisedaten — Routen, Kosten, CO₂ und Highlights pro Land.</p>
-      <div class="project-tags"><span class="p-tag">React</span><span class="p-tag">D3.js</span><span class="p-tag">Python</span></div>
-      <a href="#" class="project-link">Ansehen</a>
+    <div class="tut-step">
+      <div class="tut-icon">2️⃣</div>
+      <div>
+        <h3>Fragen beantworten</h3>
+        <p>Jedes Level hat verschiedene Quiz- und Drag&Drop-Aufgaben zu PC-Komponenten.</p>
+      </div>
     </div>
-    <div class="project-card reveal" style="transition-delay:.1s">
-      <div class="project-num">III.</div>
-      <h3 class="project-title">Automatisiertes Reporting</h3>
-      <p class="project-desc">Python-Tool zur automatisierten Erstellung von Business Reports mit KPI-Tracking und E-Mail-Versand.</p>
-      <div class="project-tags"><span class="p-tag">Python</span><span class="p-tag">Pandas</span><span class="p-tag">Automation</span></div>
-      <a href="#" class="project-link">GitHub</a>
+    <div class="tut-step">
+      <div class="tut-icon">3️⃣</div>
+      <div>
+        <h3>Sterne sammeln</h3>
+        <p>Je besser du abschneidest, desto mehr Sterne bekommst du (max. 3 ⭐).</p>
+      </div>
     </div>
-    <div class="project-card reveal" style="transition-delay:.15s">
-      <div class="project-num">IV.</div>
-      <h3 class="project-title">Remote-First SaaS Konzept</h3>
-      <p class="project-desc">Business Plan & MVP-Konzept für ein remote-first SaaS-Produkt im B2B-Bereich als Semesterprojekt.</p>
-      <div class="project-tags"><span class="p-tag">Business Model</span><span class="p-tag">UX</span><span class="p-tag">Figma</span></div>
-      <a href="#" class="project-link">Case Study</a>
-    </div>
-  </div>
-</section>
-
-<!-- ── SKILLS ── -->
-<section class="skills-section" id="skills">
-  <div class="reveal">
-    <div class="sec-eyebrow">Kenntnisse</div>
-    <h2 class="sec-title">Was ich kann</h2>
-  </div>
-  <div class="skills-grid">
-    <div class="skill-group reveal">
-      <div class="skill-group-title">Development</div>
-      <div class="skill-row"><div class="skill-top"><span class="skill-name">Python</span><span class="skill-pct">85%</span></div><div class="skill-bar"><div class="skill-fill" data-w=".85"></div></div></div>
-      <div class="skill-row"><div class="skill-top"><span class="skill-name">JavaScript / React</span><span class="skill-pct">75%</span></div><div class="skill-bar"><div class="skill-fill" data-w=".75"></div></div></div>
-      <div class="skill-row"><div class="skill-top"><span class="skill-name">SQL & Datenbanken</span><span class="skill-pct">80%</span></div><div class="skill-bar"><div class="skill-fill" data-w=".80"></div></div></div>
-      <div class="skill-row"><div class="skill-top"><span class="skill-name">HTML / CSS</span><span class="skill-pct">88%</span></div><div class="skill-bar"><div class="skill-fill" data-w=".88"></div></div></div>
-    </div>
-    <div class="skill-group reveal" style="transition-delay:.1s">
-      <div class="skill-group-title">Business & Analytics</div>
-      <div class="skill-row"><div class="skill-top"><span class="skill-name">Data Analysis</span><span class="skill-pct">82%</span></div><div class="skill-bar"><div class="skill-fill" data-w=".82"></div></div></div>
-      <div class="skill-row"><div class="skill-top"><span class="skill-name">Business Strategy</span><span class="skill-pct">78%</span></div><div class="skill-bar"><div class="skill-fill" data-w=".78"></div></div></div>
-      <div class="skill-row"><div class="skill-top"><span class="skill-name">Projektmanagement</span><span class="skill-pct">72%</span></div><div class="skill-bar"><div class="skill-fill" data-w=".72"></div></div></div>
-      <div class="skill-row"><div class="skill-top"><span class="skill-name">Excel / Power BI</span><span class="skill-pct">85%</span></div><div class="skill-bar"><div class="skill-fill" data-w=".85"></div></div></div>
-    </div>
-    <div class="skill-group reveal" style="transition-delay:.2s">
-      <div class="skill-group-title">Cloud & Tools</div>
-      <div class="skill-row"><div class="skill-top"><span class="skill-name">AWS / Azure</span><span class="skill-pct">65%</span></div><div class="skill-bar"><div class="skill-fill" data-w=".65"></div></div></div>
-      <div class="skill-row"><div class="skill-top"><span class="skill-name">Git & GitHub</span><span class="skill-pct">80%</span></div><div class="skill-bar"><div class="skill-fill" data-w=".80"></div></div></div>
-      <div class="skill-row"><div class="skill-top"><span class="skill-name">Figma / Design</span><span class="skill-pct">60%</span></div><div class="skill-bar"><div class="skill-fill" data-w=".60"></div></div></div>
-      <div class="skill-row"><div class="skill-top"><span class="skill-name">Scrum / Agile</span><span class="skill-pct">75%</span></div><div class="skill-bar"><div class="skill-fill" data-w=".75"></div></div></div>
+    <div class="tut-step">
+      <div class="tut-icon">4️⃣</div>
+      <div>
+        <h3>Alles richtig?</h3>
+        <p>Bei falschen Antworten bekommst du eine Erklärung – so lernst du am besten!</p>
+      </div>
     </div>
   </div>
-</section>
+</div>
 
-<!-- ── TRAVEL ── -->
-<section class="travel-section" id="travel">
-  <div class="reveal">
-    <div class="sec-eyebrow">Reisen & Abenteuer</div>
-    <h2 class="sec-title">Letzte Destinationen</h2>
+<!-- ==================== CREDITS ==================== -->
+<div id="screen-credits" class="screen">
+  <div class="screen-header">
+    <button class="back-btn" onclick="showMenu()">← Menü</button>
+    <h1 class="screen-title">CREDITS</h1>
   </div>
-  <div class="travel-grid">
-    <div class="travel-card reveal"><div class="travel-card-img ti1">🇯🇵</div><div class="travel-body"><div class="travel-loc">Japan · Asien</div><div class="travel-title">Tokyo & Kyoto — Kontraste einer anderen Welt</div><div class="travel-desc">3 Wochen zwischen Hightech-Metropole und jahrhundertealten Tempeln.</div></div><div class="travel-meta"><span>Feb 2025</span><span>8 min →</span></div></div>
-    <div class="travel-card reveal" style="transition-delay:.08s"><div class="travel-card-img ti2">🇹🇭</div><div class="travel-body"><div class="travel-loc">Thailand · Asien</div><div class="travel-title">Chiang Mai — Das Mekka der Digital Nomads</div><div class="travel-desc">Warum Chiang Mai der perfekte Start für Remote Work ist.</div></div><div class="travel-meta"><span>Nov 2024</span><span>6 min →</span></div></div>
-    <div class="travel-card reveal" style="transition-delay:.16s"><div class="travel-card-img ti3">🇵🇹</div><div class="travel-body"><div class="travel-loc">Portugal · Europa</div><div class="travel-title">Lissabon — Europas Startup-Hauptstadt</div><div class="travel-desc">Ein Monat in der lebendigsten Startup-Szene Europas.</div></div><div class="travel-meta"><span>Aug 2024</span><span>5 min →</span></div></div>
-    <div class="travel-card reveal" style="transition-delay:.24s"><div class="travel-card-img ti4">🇦🇪</div><div class="travel-body"><div class="travel-loc">UAE · Naher Osten</div><div class="travel-title">Dubai — Business & Exzess</div><div class="travel-desc">Was das Business-Ökosystem in Dubai wirklich ausmacht.</div></div><div class="travel-meta"><span>Jun 2024</span><span>4 min →</span></div></div>
+  <div class="credits-content">
+    <div class="credits-star">⭐</div>
+    <h2>Hardware Heroes</h2>
+    <p>Ein interaktives Lernspiel für PC-Grundlagen</p>
+    <div class="credits-divider"></div>
+    <p><strong>Entwickelt für:</strong><br>Schulprojekt / Uni-Projekt</p>
+    <p><strong>Technologien:</strong><br>HTML5 · CSS3 · Vanilla JavaScript</p>
+    <p><strong>Sounds:</strong><br>Web Audio API (generativ)</p>
+    <div class="credits-divider"></div>
+    <p class="credits-quote">"Der beste Weg, etwas zu lernen, ist es zu spielen!"</p>
   </div>
-</section>
+</div>
 
-<!-- ── FOOTER ── -->
-<footer>
-  <div class="footer-logo">Luis <span>Genenger</span></div>
-  <div class="footer-copy">© 2025 · WI · Köln</div>
-  <div class="footer-links"><a href="#">LinkedIn</a><a href="#">GitHub</a><a href="#">Instagram</a></div>
-</footer>
+<!-- ==================== RESULT OVERLAY ==================== -->
+<div id="overlay-result" class="overlay hidden">
+  <div class="result-box">
+    <div id="resultEmoji" class="result-emoji">🎉</div>
+    <h2 id="resultTitle">Geschafft!</h2>
+    <p id="resultText"></p>
+    <div id="resultStars" class="result-stars"></div>
+    <div class="result-buttons">
+      <button class="btn-menu btn-secondary" onclick="showLevelSelect()">Level-Auswahl</button>
+      <button class="btn-menu" id="btnNextLevel" onclick="nextLevel()">Weiter ▶</button>
+    </div>
+  </div>
+</div>
 
-<script>
-// ── CURSOR ──
-const cur=document.getElementById('cur'),curR=document.getElementById('cur-r');
-let mx=0,my=0,rx=0,ry=0;
-document.addEventListener('mousemove',e=>{mx=e.clientX;my=e.clientY;});
-(function loop(){
-  cur.style.left=mx+'px';cur.style.top=my+'px';
-  rx+=(mx-rx)*.12;ry+=(my-ry)*.12;
-  curR.style.left=rx+'px';curR.style.top=ry+'px';
-  requestAnimationFrame(loop);
-})();
-document.querySelectorAll('a,button,input,select,textarea,.project-card,.travel-card').forEach(el=>{
-  el.addEventListener('mouseenter',()=>{cur.style.transform='translate(-50%,-50%) scale(2.5)';cur.style.opacity='.5';});
-  el.addEventListener('mouseleave',()=>{cur.style.transform='translate(-50%,-50%) scale(1)';cur.style.opacity='1';});
-});
+<!-- ==================== PART INFO OVERLAY ==================== -->
+<div id="overlay-info" class="overlay hidden">
+  <div class="info-box">
+    <button class="close-btn" onclick="closeInfo()">✕</button>
+    <div id="infoPartSvg" class="info-part-svg"></div>
+    <h2 id="infoTitle"></h2>
+    <p id="infoDesc"></p>
+    <div id="infoFacts" class="info-facts"></div>
+    <button class="btn-menu" onclick="closeInfo()">Verstanden! 👍</button>
+  </div>
+</div>
 
-// ── NAV PANELS ──
-document.querySelectorAll('.nav-pill').forEach(btn=>{
-  btn.addEventListener('click',e=>{
-    e.stopPropagation();
-    const pid='panel-'+btn.dataset.panel;
-    const panel=document.getElementById(pid);
-    const isOpen=panel.classList.contains('open');
-    document.querySelectorAll('.nav-panel').forEach(p=>p.classList.remove('open'));
-    document.querySelectorAll('.nav-pill').forEach(b=>b.classList.remove('active'));
-    if(!isOpen){panel.classList.add('open');btn.classList.add('active');}
-  });
-});
-document.addEventListener('click',()=>{
-  document.querySelectorAll('.nav-panel').forEach(p=>p.classList.remove('open'));
-  document.querySelectorAll('.nav-pill').forEach(b=>b.classList.remove('active'));
-});
-document.querySelectorAll('.nav-panel').forEach(p=>p.addEventListener('click',e=>e.stopPropagation()));
-
-// ── VISITED COUNTRIES ──
-// ISO alpha-2 codes of visited countries
-let visited = new Set([
-  'DE','PT','JP','TH','AE','ES','IT','FR','GB','NL','GR','TR','AT'
-]);
-const highlight = new Set(['JP']); // pulse/teal highlight
-let editMode = false;
-
-function updateCounter(){
-  document.getElementById('visitedNum').textContent = visited.size;
-  document.getElementById('hero-country-count').innerHTML = visited.size+'<span>+</span>';
-}
-
-// ── D3 WORLD MAP ──
-const tooltip = document.getElementById('map-tooltip');
-const svgEl = document.getElementById('world-map');
-
-// Use Natural Earth projection via D3
-const width = 960, height = 480;
-const svg = d3.select('#world-map')
-  .attr('viewBox', `0 0 ${width} ${height}`)
-  .attr('preserveAspectRatio','xMidYMid meet');
-
-const projection = d3.geoNaturalEarth1()
-  .scale(153)
-  .translate([width/2, height/2]);
-
-const path = d3.geoPath().projection(projection);
-
-// Fetch world topojson from CDN
-fetch('https://cdn.jsdelivr.net/npm/world-atlas@2/countries-110m.json')
-  .then(r=>r.json())
-  .then(world=>{
-    const countries = topojson.feature(world, world.objects.countries);
-
-    // Country name lookup (ISO numeric → alpha2 + name)
-    // We embed a minimal lookup table
-    const numToInfo = {
-      4:{a2:'AF',name:'Afghanistan'},8:{a2:'AL',name:'Albanien'},12:{a2:'DZ',name:'Algerien'},
-      24:{a2:'AO',name:'Angola'},32:{a2:'AR',name:'Argentinien'},36:{a2:'AU',name:'Australien'},
-      40:{a2:'AT',name:'Österreich'},50:{a2:'BD',name:'Bangladesch'},56:{a2:'BE',name:'Belgien'},
-      68:{a2:'BO',name:'Bolivien'},76:{a2:'BR',name:'Brasilien'},100:{a2:'BG',name:'Bulgarien'},
-      116:{a2:'KH',name:'Kambodscha'},120:{a2:'CM',name:'Kamerun'},124:{a2:'CA',name:'Kanada'},
-      144:{a2:'LK',name:'Sri Lanka'},152:{a2:'CL',name:'Chile'},156:{a2:'CN',name:'China'},
-      170:{a2:'CO',name:'Kolumbien'},180:{a2:'CD',name:'DR Kongo'},191:{a2:'HR',name:'Kroatien'},
-      192:{a2:'CU',name:'Kuba'},203:{a2:'CZ',name:'Tschechien'},204:{a2:'BJ',name:'Benin'},
-      208:{a2:'DK',name:'Dänemark'},218:{a2:'EC',name:'Ecuador'},818:{a2:'EG',name:'Ägypten'},
-      231:{a2:'ET',name:'Äthiopien'},246:{a2:'FI',name:'Finnland'},250:{a2:'FR',name:'Frankreich'},
-      266:{a2:'GA',name:'Gabun'},276:{a2:'DE',name:'Deutschland'},288:{a2:'GH',name:'Ghana'},
-      300:{a2:'GR',name:'Griechenland'},320:{a2:'GT',name:'Guatemala'},324:{a2:'GN',name:'Guinea'},
-      340:{a2:'HN',name:'Honduras'},348:{a2:'HU',name:'Ungarn'},356:{a2:'IN',name:'Indien'},
-      360:{a2:'ID',name:'Indonesien'},364:{a2:'IR',name:'Iran'},368:{a2:'IQ',name:'Irak'},
-      372:{a2:'IE',name:'Irland'},376:{a2:'IL',name:'Israel'},380:{a2:'IT',name:'Italien'},
-      388:{a2:'JM',name:'Jamaika'},392:{a2:'JP',name:'Japan'},400:{a2:'JO',name:'Jordanien'},
-      404:{a2:'KE',name:'Kenia'},408:{a2:'KP',name:'Nordkorea'},410:{a2:'KR',name:'Südkorea'},
-      116:{a2:'KH',name:'Kambodscha'},418:{a2:'LA',name:'Laos'},422:{a2:'LB',name:'Libanon'},
-      430:{a2:'LR',name:'Liberia'},434:{a2:'LY',name:'Libyen'},450:{a2:'MG',name:'Madagaskar'},
-      454:{a2:'MW',name:'Malawi'},458:{a2:'MY',name:'Malaysia'},484:{a2:'MX',name:'Mexiko'},
-      504:{a2:'MA',name:'Marokko'},508:{a2:'MZ',name:'Mosambik'},516:{a2:'NA',name:'Namibia'},
-      524:{a2:'NP',name:'Nepal'},528:{a2:'NL',name:'Niederlande'},554:{a2:'NZ',name:'Neuseeland'},
-      558:{a2:'NI',name:'Nicaragua'},562:{a2:'NE',name:'Niger'},566:{a2:'NG',name:'Nigeria'},
-      578:{a2:'NO',name:'Norwegen'},586:{a2:'PK',name:'Pakistan'},591:{a2:'PA',name:'Panama'},
-      598:{a2:'PG',name:'Papua-Neuguinea'},604:{a2:'PE',name:'Peru'},608:{a2:'PH',name:'Philippinen'},
-      616:{a2:'PL',name:'Polen'},620:{a2:'PT',name:'Portugal'},630:{a2:'PR',name:'Puerto Rico'},
-      634:{a2:'QA',name:'Katar'},642:{a2:'RO',name:'Rumänien'},643:{a2:'RU',name:'Russland'},
-      682:{a2:'SA',name:'Saudi-Arabien'},686:{a2:'SN',name:'Senegal'},694:{a2:'SL',name:'Sierra Leone'},
-      706:{a2:'SO',name:'Somalia'},710:{a2:'ZA',name:'Südafrika'},724:{a2:'ES',name:'Spanien'},
-      729:{a2:'SD',name:'Sudan'},752:{a2:'SE',name:'Schweden'},756:{a2:'CH',name:'Schweiz'},
-      760:{a2:'SY',name:'Syrien'},764:{a2:'TH',name:'Thailand'},788:{a2:'TN',name:'Tunesien'},
-      792:{a2:'TR',name:'Türkei'},800:{a2:'UG',name:'Uganda'},804:{a2:'UA',name:'Ukraine'},
-      784:{a2:'AE',name:'UAE'},826:{a2:'GB',name:'Großbritannien'},834:{a2:'TZ',name:'Tansania'},
-      840:{a2:'US',name:'USA'},858:{a2:'UY',name:'Uruguay'},862:{a2:'VE',name:'Venezuela'},
-      704:{a2:'VN',name:'Vietnam'},887:{a2:'YE',name:'Jemen'},894:{a2:'ZM',name:'Sambia'},
-      716:{a2:'ZW',name:'Simbabwe'},32:{a2:'AR',name:'Argentinien'},76:{a2:'BR',name:'Brasilien'}
-    };
-
-    // Draw graticule
-    const graticule = d3.geoGraticule()();
-    svg.append('path').datum(graticule)
-      .attr('d', path)
-      .attr('fill','none')
-      .attr('stroke','#ddd5c0')
-      .attr('stroke-width','.3')
-      .attr('opacity','.5');
-
-    // Draw countries
-    svg.selectAll('.country')
-      .data(countries.features)
-      .enter().append('path')
-      .attr('class','country-path')
-      .attr('d', path)
-      .attr('data-id', d=>{
-        const info = numToInfo[+d.id];
-        return info ? info.a2 : '';
-      })
-      .attr('data-name', d=>{
-        const info = numToInfo[+d.id];
-        return info ? info.name : 'Unbekannt';
-      })
-      .style('fill', d=>{
-        const info = numToInfo[+d.id];
-        if(!info) return '#e0d8c8';
-        if(highlight.has(info.a2)) return '#2a7c6f';
-        if(visited.has(info.a2)) return '#c47c2b';
-        return '#e0d8c8';
-      })
-      .style('stroke','#c4b898')
-      .style('stroke-width','.4')
-      .style('cursor', 'pointer')
-      .style('transition','fill .3s')
-      .on('mouseover', function(event, d){
-        const info = numToInfo[+d.id];
-        const name = info ? info.name : '';
-        const a2 = info ? info.a2 : '';
-        const isV = visited.has(a2);
-        if(name){
-          tooltip.textContent = (isV ? '✓ ' : '') + name;
-          tooltip.style.opacity = '1';
-        }
-        if(!editMode){
-          d3.select(this).style('fill', d=>{
-            const inf = numToInfo[+d.id];
-            if(!inf) return '#cfc7b5';
-            if(highlight.has(inf.a2)) return '#236b5f';
-            if(visited.has(inf.a2)) return '#b36d20';
-            return '#cfc7b5';
-          });
-        }
-      })
-      .on('mousemove', function(event){
-        tooltip.style.left = (event.clientX+14)+'px';
-        tooltip.style.top = (event.clientY-10)+'px';
-      })
-      .on('mouseout', function(event, d){
-        tooltip.style.opacity='0';
-        updateMapColors();
-      })
-      .on('click', function(event, d){
-        if(!editMode) return;
-        const info = numToInfo[+d.id];
-        if(!info || !info.a2) return;
-        const a2 = info.a2;
-        if(visited.has(a2)) visited.delete(a2);
-        else visited.add(a2);
-        updateCounter();
-        updateMapColors();
-      });
-
-    // Sphere outline
-    svg.append('path')
-      .datum({type:'Sphere'})
-      .attr('d', path)
-      .attr('fill','none')
-      .attr('stroke','#c4b898')
-      .attr('stroke-width','.8');
-
-    updateMapColors();
-  })
-  .catch(()=>{
-    // Fallback if CDN fails
-    svgEl.parentElement.innerHTML='<div style="padding:60px;text-align:center;color:var(--muted);font-size:13px;letter-spacing:2px;">Karte lädt... Bitte Internetverbindung prüfen.</div>';
-  });
-
-// topojson minimal inline (needed for the fetch above)
-// We load it from CDN
-const topoScript = document.createElement('script');
-topoScript.src = 'https://cdnjs.cloudflare.com/ajax/libs/topojson/3.0.2/topojson.min.js';
-topoScript.onload = () => {
-  // re-trigger fetch after topojson loads
-  initMap();
-};
-document.head.appendChild(topoScript);
-
-function initMap(){
-  fetch('https://cdn.jsdelivr.net/npm/world-atlas@2/countries-110m.json')
-    .then(r=>r.json())
-    .then(world=>{
-      svg.selectAll('*').remove();
-
-      const countries = topojson.feature(world, world.objects.countries);
-      const borders = topojson.mesh(world, world.objects.countries, (a,b)=>a!==b);
-
-      const numToInfo = {
-        4:{a2:'AF',name:'Afghanistan'},8:{a2:'AL',name:'Albanien'},12:{a2:'DZ',name:'Algerien'},
-        24:{a2:'AO',name:'Angola'},32:{a2:'AR',name:'Argentinien'},36:{a2:'AU',name:'Australien'},
-        40:{a2:'AT',name:'Österreich'},50:{a2:'BD',name:'Bangladesch'},56:{a2:'BE',name:'Belgien'},
-        68:{a2:'BO',name:'Bolivien'},76:{a2:'BR',name:'Brasilien'},100:{a2:'BG',name:'Bulgarien'},
-        116:{a2:'KH',name:'Kambodscha'},120:{a2:'CM',name:'Kamerun'},124:{a2:'CA',name:'Kanada'},
-        144:{a2:'LK',name:'Sri Lanka'},152:{a2:'CL',name:'Chile'},156:{a2:'CN',name:'China'},
-        170:{a2:'CO',name:'Kolumbien'},180:{a2:'CD',name:'DR Kongo'},191:{a2:'HR',name:'Kroatien'},
-        192:{a2:'CU',name:'Kuba'},203:{a2:'CZ',name:'Tschechien'},208:{a2:'DK',name:'Dänemark'},
-        218:{a2:'EC',name:'Ecuador'},818:{a2:'EG',name:'Ägypten'},231:{a2:'ET',name:'Äthiopien'},
-        246:{a2:'FI',name:'Finnland'},250:{a2:'FR',name:'Frankreich'},266:{a2:'GA',name:'Gabun'},
-        276:{a2:'DE',name:'Deutschland'},288:{a2:'GH',name:'Ghana'},300:{a2:'GR',name:'Griechenland'},
-        320:{a2:'GT',name:'Guatemala'},324:{a2:'GN',name:'Guinea'},340:{a2:'HN',name:'Honduras'},
-        348:{a2:'HU',name:'Ungarn'},356:{a2:'IN',name:'Indien'},360:{a2:'ID',name:'Indonesien'},
-        364:{a2:'IR',name:'Iran'},368:{a2:'IQ',name:'Irak'},372:{a2:'IE',name:'Irland'},
-        376:{a2:'IL',name:'Israel'},380:{a2:'IT',name:'Italien'},388:{a2:'JM',name:'Jamaika'},
-        392:{a2:'JP',name:'Japan'},400:{a2:'JO',name:'Jordanien'},404:{a2:'KE',name:'Kenia'},
-        408:{a2:'KP',name:'Nordkorea'},410:{a2:'KR',name:'Südkorea'},418:{a2:'LA',name:'Laos'},
-        422:{a2:'LB',name:'Libanon'},430:{a2:'LR',name:'Liberia'},434:{a2:'LY',name:'Libyen'},
-        450:{a2:'MG',name:'Madagaskar'},454:{a2:'MW',name:'Malawi'},458:{a2:'MY',name:'Malaysia'},
-        484:{a2:'MX',name:'Mexiko'},504:{a2:'MA',name:'Marokko'},508:{a2:'MZ',name:'Mosambik'},
-        516:{a2:'NA',name:'Namibia'},524:{a2:'NP',name:'Nepal'},528:{a2:'NL',name:'Niederlande'},
-        554:{a2:'NZ',name:'Neuseeland'},558:{a2:'NI',name:'Nicaragua'},562:{a2:'NE',name:'Niger'},
-        566:{a2:'NG',name:'Nigeria'},578:{a2:'NO',name:'Norwegen'},586:{a2:'PK',name:'Pakistan'},
-        591:{a2:'PA',name:'Panama'},604:{a2:'PE',name:'Peru'},608:{a2:'PH',name:'Philippinen'},
-        616:{a2:'PL',name:'Polen'},620:{a2:'PT',name:'Portugal'},634:{a2:'QA',name:'Katar'},
-        642:{a2:'RO',name:'Rumänien'},643:{a2:'RU',name:'Russland'},682:{a2:'SA',name:'Saudi-Arabien'},
-        686:{a2:'SN',name:'Senegal'},694:{a2:'SL',name:'Sierra Leone'},706:{a2:'SO',name:'Somalia'},
-        710:{a2:'ZA',name:'Südafrika'},724:{a2:'ES',name:'Spanien'},729:{a2:'SD',name:'Sudan'},
-        752:{a2:'SE',name:'Schweden'},756:{a2:'CH',name:'Schweiz'},760:{a2:'SY',name:'Syrien'},
-        764:{a2:'TH',name:'Thailand'},788:{a2:'TN',name:'Tunesien'},792:{a2:'TR',name:'Türkei'},
-        800:{a2:'UG',name:'Uganda'},804:{a2:'UA',name:'Ukraine'},784:{a2:'AE',name:'UAE'},
-        826:{a2:'GB',name:'Großbritannien'},834:{a2:'TZ',name:'Tansania'},840:{a2:'US',name:'USA'},
-        858:{a2:'UY',name:'Uruguay'},862:{a2:'VE',name:'Venezuela'},704:{a2:'VN',name:'Vietnam'},
-        887:{a2:'YE',name:'Jemen'},894:{a2:'ZM',name:'Sambia'},716:{a2:'ZW',name:'Simbabwe'},
-        646:{a2:'RW',name:'Ruanda'},174:{a2:'KM',name:'Komoren'},426:{a2:'LS',name:'Lesotho'},
-        748:{a2:'SZ',name:'Eswatini'},548:{a2:'VU',name:'Vanuatu'},242:{a2:'FJ',name:'Fidschi'},
-        90:{a2:'SB',name:'Salomonen'},598:{a2:'PG',name:'Papua-Neuguinea'}
-      };
-
-      window._numToInfo = numToInfo;
-
-      // Ocean background
-      svg.append('path')
-        .datum({type:'Sphere'})
-        .attr('d',path)
-        .attr('fill','#d4e8e4');
-
-      // Graticule
-      const graticule = d3.geoGraticule()();
-      svg.append('path').datum(graticule)
-        .attr('d',path).attr('fill','none')
-        .attr('stroke','#b8d4ce').attr('stroke-width','.3').attr('opacity','.7');
-
-      // Countries
-      svg.selectAll('.cpath')
-        .data(countries.features)
-        .enter().append('path')
-        .attr('class','cpath')
-        .attr('d',path)
-        .attr('data-id', d=>(numToInfo[+d.id]||{}).a2||'')
-        .attr('data-name', d=>(numToInfo[+d.id]||{}).name||'')
-        .style('stroke','none')
-        .style('cursor','pointer')
-        .style('transition','fill .25s')
-        .on('mouseover', function(event,d){
-          const info = numToInfo[+d.id]||{};
-          if(info.name){
-            tooltip.textContent=(visited.has(info.a2)?'✓ ':'')+info.name;
-            tooltip.style.opacity='1';
-          }
-          if(editMode){
-            d3.select(this).style('opacity','0.75');
-          } else {
-            const cur = d3.select(this).style('fill');
-            d3.select(this).style('filter','brightness(0.85)');
-          }
-        })
-        .on('mousemove', function(event){
-          tooltip.style.left=(event.clientX+14)+'px';
-          tooltip.style.top=(event.clientY-10)+'px';
-        })
-        .on('mouseout', function(){
-          tooltip.style.opacity='0';
-          d3.select(this).style('filter','none').style('opacity','1');
-        })
-        .on('click', function(event,d){
-          if(!editMode) return;
-          const info = numToInfo[+d.id]||{};
-          if(!info.a2) return;
-          if(visited.has(info.a2)) visited.delete(info.a2);
-          else visited.add(info.a2);
-          updateCounter();
-          updateMapColors();
-        });
-
-      // Borders
-      svg.append('path').datum(borders)
-        .attr('d',path).attr('fill','none')
-        .attr('stroke','#c4b898').attr('stroke-width','.5');
-
-      // Sphere outline
-      svg.append('path').datum({type:'Sphere'})
-        .attr('d',path).attr('fill','none')
-        .attr('stroke','#a89878').attr('stroke-width','1');
-
-      updateMapColors();
-    });
-}
-
-window.updateMapColors = function(){
-  const ni = window._numToInfo || {};
-  d3.selectAll('.cpath').style('fill', function(d){
-    const info = ni[+d.id]||{};
-    if(!info.a2) return '#e0d8c4';
-    if(highlight.has(info.a2)) return '#2a7c6f';
-    if(visited.has(info.a2)) return '#c47c2b';
-    return '#e0d8c4';
-  });
-};
-
-// ── EDIT MODE ──
-const btnView = document.getElementById('btn-view');
-const btnEdit = document.getElementById('btn-edit');
-const modeHint = document.getElementById('mode-hint');
-
-btnEdit.addEventListener('click',()=>{
-  editMode = !editMode;
-  if(editMode){
-    btnEdit.classList.add('active-mode');
-    btnView.classList.remove('active-mode');
-    modeHint.textContent='Klicke auf ein Land um es zu markieren / entmarkieren';
-    modeHint.style.color='var(--amber)';
-  } else {
-    btnEdit.classList.remove('active-mode');
-    btnView.classList.add('active-mode');
-    modeHint.textContent='Hover über ein Land für den Namen';
-    modeHint.style.color='';
-  }
-});
-btnView.addEventListener('click',()=>{
-  editMode=false;
-  btnView.classList.add('active-mode');
-  btnEdit.classList.remove('active-mode');
-  modeHint.textContent='Hover über ein Land für den Namen';
-  modeHint.style.color='';
-});
-
-// ── SCROLL REVEAL ──
-const revObs = new IntersectionObserver(entries=>{
-  entries.forEach(e=>{if(e.isIntersecting)e.target.classList.add('visible');});
-},{threshold:0.08});
-document.querySelectorAll('.reveal').forEach(el=>revObs.observe(el));
-
-// ── SKILL BARS ──
-const skillObs = new IntersectionObserver(entries=>{
-  entries.forEach(entry=>{
-    if(entry.isIntersecting){
-      entry.target.querySelectorAll('.skill-fill').forEach(bar=>{
-        const w = bar.dataset.w;
-        bar.style.transform = `scaleX(${w})`;
-      });
-    }
-  });
-},{threshold:0.2});
-document.querySelectorAll('.skill-group').forEach(g=>skillObs.observe(g));
-
-updateCounter();
-</script>
+<script src="game.js"></script>
 </body>
 </html>
-
